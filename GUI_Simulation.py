@@ -29,10 +29,11 @@ class GUI:
 
         self.load_frame() # Load initial frame
 
-    def on_key_release(self, event):
+    def on_enter_key(self, event):
         self.Simu_parameters['Coefficient thermique'] = self.coef_therm_user_entry.get()
         self.Simu_parameters['Largeur Plaque'] = self.plaque_width_user_entry.get()
         self.Simu_parameters['Longueur Plaque'] = self.plaque_lenght_user_entry.get()
+        self.load_frame()
 
     def load_frame(self):
         for widget in self.root.winfo_children():
@@ -51,6 +52,7 @@ class GUI:
         self.Select_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
         self.Select_path_button.grid(row=0, column=1, sticky="e")
 
+        # TODO add mm label to the entries
         # Frame for plaque info
         self.plaque_info_frame = ctk.CTkFrame(self.root)
         self.plaque_info_frame.grid(row=1, column=0, columnspan=2, pady=self.pix_spacing/2, padx=self.pix_spacing, sticky="ew")
@@ -58,26 +60,26 @@ class GUI:
         self.plaque_info_frame.columnconfigure(1, weight=0)
         # Label for coef therm
         Coef_therm_label = ctk.CTkLabel(self.plaque_info_frame, text="Coefficient Thermique : ")
-        Coef_therm_label.grid(row=0, column=0, sticky="w", padx=(5,0))
+        Coef_therm_label.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(5,0))
         # data Entry for coef therm 
         self.coef_therm_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center')
-        self.coef_therm_user_entry.bind("<KeyRelease>", self.on_key_release) # Catch any keystroke
+        self.coef_therm_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.coef_therm_user_entry.insert("1", str(self.Simu_parameters['Coefficient thermique']))
-        self.coef_therm_user_entry.grid(row=0, column=1, sticky="w")
+        self.coef_therm_user_entry.grid(row=0, column=1, sticky="w", pady=(5,0))
         # Label for plaque width
         plaque_width = ctk.CTkLabel(self.plaque_info_frame, text="Largeur de la plaque en mm : ")
         plaque_width.grid(row=1, column=0, sticky="w", padx=(5,0))
-        # data Entry for coef therm 
+        # data Entry for plaque width 
         self.plaque_width_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center')
-        self.plaque_width_user_entry.bind("<KeyRelease>", self.on_key_release) # Catch any keystroke
+        self.plaque_width_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.plaque_width_user_entry.insert("1", str(self.Simu_parameters['Largeur Plaque']))
         self.plaque_width_user_entry.grid(row=1, column=1, sticky="w")
         # Label for plaque lenght
         plaque_lenght = ctk.CTkLabel(self.plaque_info_frame, text="Longueur de la plaque en mm : ")
         plaque_lenght.grid(row=2, column=0, sticky="w", padx=(5,0))
-        # data Entry for coef therm 
+        # data Entry for plaque lenght
         self.plaque_lenght_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center')
-        self.plaque_lenght_user_entry.bind("<KeyRelease>", self.on_key_release) # Catch any keystroke
+        self.plaque_lenght_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.plaque_lenght_user_entry.insert("1", str(self.Simu_parameters['Longueur Plaque']))
         self.plaque_lenght_user_entry.grid(row=2, column=1, sticky="w")
 
@@ -103,7 +105,7 @@ class GUI:
         # Create horizontal slider for the red square's x position (width)
         self.width_slider = ctk.CTkSlider(self.plaque_info_frame, from_=0, to=int(self.Simu_parameters['Longueur Plaque']), number_of_steps=100, command=self.update_red_square, orientation="horizontal")
         self.width_slider.set(int(self.Simu_parameters['Position Actuateur Longueur']))  # Set initial x position to the middle
-        self.width_slider.grid(row=5, column=0, columnspan=2, pady=0, padx=(10,4), sticky="ew")
+        self.width_slider.grid(row=5, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
         # Create corresponding Entry for horizontal slider
         self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
         self.width_value.grid(row=5, column=2, padx=0, pady=(0,5), sticky="w")
