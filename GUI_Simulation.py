@@ -1,6 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 import customtkinter as ctk
+from Simulation import Launch_Simu
+
+# TODO slider for interest point
+# TODO link simulation and all variables
 
 class GUI:
     def __init__(self):
@@ -18,22 +22,49 @@ class GUI:
         self.pix_spacing = 20
         self.pix_to_plaque_box = 3
         self.Save_as_path = "Aucune Sélection"
-        self.Coef_Therm = 0
+        # self.Coef_Therm = 0
+        # # self.Simu_parameters = {
+        #     'Coefficient thermique' : 'abc',
+        #     # 'Largeur Plaque' : '60',
+        #     # 'plaque_longueur' : '116',
+        #     # 'position_largeur_actuateur' : '30',
+        #     'Position Actuateur Longueur': '40',
+        # }
         self.Simu_parameters = {
-            'Coefficient thermique' : 'abc',
-            'Largeur Plaque' : '60',
-            'Longueur Plaque' : '116',
-            'Position Actuateur Largeur' : '30',
-            'Position Actuateur Longueur': '40',
+            'Coefficient thermique' : 'abc', # A ENLEVER
+            'plaque_largeur' : 60, # mm
+            'plaque_longueur' : 116, # mm
+            'mm_par_element' : 5, # mm
+            'Temperature_Ambiante_C' : 20, # C
+            'position_longueur_actuateur' : 40, # mm
+            'position_largeur_actuateur' : 30, # mm
+            'largeur_actu' : 15, # mm
+            'longueur_actu' : 15, # mm
+            'puissance_actuateur' : 5, #W
+            'masse_volumique_plaque' : 2698, # kg/m3
+            'epaisseur_plaque_mm' : 3, # mm
+            'capacite_thermique_plaque' : 900, # J/Kg*K
+            'conductivite_thermique_plaque' : 220, # W/m*K
+            'masse_volumique_Air' : 1.293, # kg/m3
+            'capacite_thermique_Air' : 1005, # J/Kg*K
+            'conductivite_thermique_Air' : 0.025, # W/m*K
+            'coefficient_convection' : 22, # W/m2*K
+            'time_step' : 0.01, #sec
+            'simu_time' : 200, #sec
         }
 
         self.load_frame() # Load initial frame
 
     def on_enter_key(self, event):
-        self.Simu_parameters['Coefficient thermique'] = self.coef_therm_user_entry.get()
-        self.Simu_parameters['Largeur Plaque'] = self.plaque_width_user_entry.get()
-        self.Simu_parameters['Longueur Plaque'] = self.plaque_lenght_user_entry.get()
+        self.Log_parameters()
         self.load_frame()
+
+    def Log_parameters(self):
+        self.Simu_parameters['Coefficient thermique'] = self.coef_therm_user_entry.get()
+        self.Simu_parameters['plaque_largeur'] = self.plaque_width_user_entry.get()
+        self.Simu_parameters['plaque_longueur'] = self.plaque_lenght_user_entry.get()
+        self.Simu_parameters['position_longueur_actuateur'] = self.width_value.get()
+        self.Simu_parameters['position_largeur_actuateur'] = self.length_value.get()
 
     def load_frame(self):
         for widget in self.root.winfo_children():
@@ -72,7 +103,7 @@ class GUI:
         # data Entry for plaque width 
         self.plaque_width_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center')
         self.plaque_width_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
-        self.plaque_width_user_entry.insert("1", str(self.Simu_parameters['Largeur Plaque']))
+        self.plaque_width_user_entry.insert("1", str(self.Simu_parameters['plaque_largeur']))
         self.plaque_width_user_entry.grid(row=1, column=1, sticky="w")
         # Label for plaque lenght
         plaque_lenght = ctk.CTkLabel(self.plaque_info_frame, text="Longueur de la plaque en mm : ")
@@ -80,7 +111,7 @@ class GUI:
         # data Entry for plaque lenght
         self.plaque_lenght_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center')
         self.plaque_lenght_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
-        self.plaque_lenght_user_entry.insert("1", str(self.Simu_parameters['Longueur Plaque']))
+        self.plaque_lenght_user_entry.insert("1", str(self.Simu_parameters['plaque_longueur']))
         self.plaque_lenght_user_entry.grid(row=2, column=1, sticky="w")
 
         # TODO
@@ -93,7 +124,7 @@ class GUI:
         PosActu_Label = ctk.CTkLabel(self.plaque_info_frame, text="Position de l'actuateur :")
         PosActu_Label.grid(row=3, column=0, sticky="w", padx=(5,0))
         # Plaque
-        self.plaque_width = 300*int(self.Simu_parameters['Largeur Plaque'])/int(self.Simu_parameters['Longueur Plaque'])
+        self.plaque_width = 300*int(self.Simu_parameters['plaque_largeur'])/int(self.Simu_parameters['plaque_longueur'])
         self.plaque_lenght = 300
         self.plaque_box_frame = ctk.CTkFrame(self.plaque_info_frame, height=self.plaque_width, width=self.plaque_lenght, fg_color="black")
         self.plaque_box_frame.grid(row=4, column=0, pady=(5,5), columnspan = 2, padx=10)
@@ -103,8 +134,8 @@ class GUI:
         self.create_rounded_rectangle('gray10')
         self.red_dot = self.plaque_canvas.create_oval(10, 10, 20, 20, fill="red", outline="red")
         # Create horizontal slider for the red square's x position (width)
-        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, from_=0, to=int(self.Simu_parameters['Longueur Plaque']), number_of_steps=100, command=self.update_red_square, orientation="horizontal")
-        self.width_slider.set(int(self.Simu_parameters['Position Actuateur Longueur']))  # Set initial x position to the middle
+        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, from_=0, to=int(self.Simu_parameters['plaque_longueur']), number_of_steps=100, command=self.update_red_square, orientation="horizontal")
+        self.width_slider.set(int(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
         self.width_slider.grid(row=5, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
         # Create corresponding Entry for horizontal slider
         self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
@@ -112,9 +143,9 @@ class GUI:
         self.width_value.insert(0, str(self.width_slider.get()))  # Set initial value
         self.width_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width"))
         # Create vertical slider for the red square's y position (height)
-        slider_height = 300*int(self.Simu_parameters['Largeur Plaque'])/int(self.Simu_parameters['Longueur Plaque'])
-        self.length_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=0, to=int(self.Simu_parameters['Largeur Plaque']), number_of_steps=100, command=self.update_red_square, orientation="vertical")
-        self.length_slider.set(int(self.Simu_parameters['Position Actuateur Largeur']))  # Set initial y position to the middle
+        slider_height = 300*int(self.Simu_parameters['plaque_largeur'])/int(self.Simu_parameters['plaque_longueur'])
+        self.length_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=0, to=int(self.Simu_parameters['plaque_largeur']), number_of_steps=100, command=self.update_red_square, orientation="vertical")
+        self.length_slider.set(int(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
         self.length_slider.grid(row=4, column=2, padx=(35,0), pady=(0,0), sticky="w")
         # Create corresponding Entry for vertical slider
         self.length_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
@@ -132,7 +163,9 @@ class GUI:
         self.root.grid_columnconfigure(1, weight=1)
 
     def Simulate(self):
-        messagebox.showinfo("Info", 'Hello, world!')
+        self.Log_parameters()
+        Launch_Simu(self.Simu_parameters)
+        # messagebox.showinfo("Info", 'Hello, world!')
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')
@@ -145,7 +178,7 @@ class GUI:
         """Draw a rectangle with rounded corners."""
         r = 10
         W = 300
-        L = 300*int(self.Simu_parameters['Largeur Plaque'])/int(self.Simu_parameters['Longueur Plaque'])
+        L = 300*int(self.Simu_parameters['plaque_largeur'])/int(self.Simu_parameters['plaque_longueur'])
 
         # Coordinates of the rounded rectangle (with rounded corners)
         self.plaque_canvas.create_oval(0, 0, r*2, r*2, fill=color, outline=color)  # Top-left corner
@@ -164,8 +197,8 @@ class GUI:
         # y = (300 - (300 - self.length_slider.get()))  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
         y = self.length_slider.get()  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
 
-        pos_x_in_pix = x*300/int(self.Simu_parameters['Longueur Plaque'])
-        pos_y_in_pix = 300*((int(self.Simu_parameters['Largeur Plaque'])) - y)/int(self.Simu_parameters['Longueur Plaque'])
+        pos_x_in_pix = x*300/int(self.Simu_parameters['plaque_longueur'])
+        pos_y_in_pix = 300*((int(self.Simu_parameters['plaque_largeur'])) - y)/int(self.Simu_parameters['plaque_longueur'])
 
         self.plaque_canvas.coords(self.red_dot, pos_x_in_pix - 5, pos_y_in_pix - 5, pos_x_in_pix + 5, pos_y_in_pix + 5)
 
@@ -181,12 +214,12 @@ class GUI:
             if slider_type == "width":
                 value = float(self.width_value.get())
                 # Ensure value is within slider's range
-                if 0 <= value <= int(self.Simu_parameters['Longueur Plaque']):
+                if 0 <= value <= int(self.Simu_parameters['plaque_longueur']):
                     self.width_slider.set(value)
             elif slider_type == "length":
                 value = float(self.length_value.get())
                 # Ensure value is within slider's range (reverse the input value for vertical slider)
-                if 0 <= value <= int(self.Simu_parameters['Largeur Plaque']):
+                if 0 <= value <= int(self.Simu_parameters['plaque_largeur']):
                     self.length_slider.set(value)  # Reverse for vertical slider
         except ValueError:
             pass  # Ignore invalid input (e.g., if the input is not a number)
