@@ -1,0 +1,22 @@
+{
+    "plaque_largeur" : 60,
+    "plaque_longueur" : 116,
+    "mm_par_element" : 5, 
+    "Temperature_Ambiante_C" : 20,
+    "position_longueur_actuateur" : 60,
+    "position_largeur_actuateur" : 30,
+    "largeur_actu" : 15, 
+    "longueur_actu" : 15, 
+    "puissance_actuateur" : 7.1,
+    "masse_volumique_plaque" : 2698,
+    "epaisseur_plaque_mm" : 1,
+    "capacite_thermique_plaque" : 900,
+    "conductivite_thermique_plaque" : 220,
+    "masse_volumique_Air" : 1.293,
+    "capacite_thermique_Air" : 1005, 
+    "conductivite_thermique_Air" : 0.025,
+    "coefficient_convection" : 22, 
+    "time_step" : 0.01, 
+    "simu_duration" : 150, 
+    "animation_lenght" : 100 
+}

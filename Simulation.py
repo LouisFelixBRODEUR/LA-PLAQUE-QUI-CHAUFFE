@@ -15,6 +15,9 @@ def actuateur_influence(Geo_Mat, Parameters):
     position_longueur_actuateur = float(Parameters['position_longueur_actuateur'])
     masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
     capacite_thermique_plaque = float(Parameters['capacite_thermique_plaque'])
+    puissance_actu = float(Parameters['puissance_actuateur'])
+    time_step = float(Parameters['time_step'])
+    epaisseur_plaque = float(Parameters['epaisseur_plaque_mm'])
 
     pos_y_actu = int(position_largeur_actuateur/mm_par_element)
     pos_x_actu = int(position_longueur_actuateur/mm_par_element)
@@ -23,10 +26,10 @@ def actuateur_influence(Geo_Mat, Parameters):
     half_larg = int(largeur_actu_in_element/2)
     half_lon = int(longueur_actu_in_element/2)
 
-    Chaleur_en_jeu = Parameters['puissance_actuateur']*Parameters['time_step']
+    Chaleur_en_jeu = puissance_actu*time_step
     Chaleur_par_element = Chaleur_en_jeu /(largeur_actu_in_element)/(largeur_actu_in_element)
 
-    delta_temp = Chaleur_par_element / (Parameters['epaisseur_plaque_mm'] /1000 * (mm_par_element/1000)**2 * masse_volumique_plaque) / capacite_thermique_plaque
+    delta_temp = Chaleur_par_element / (epaisseur_plaque /1000 * (mm_par_element/1000)**2 * masse_volumique_plaque) / capacite_thermique_plaque
     for y in range(pos_y_actu-half_lon, pos_y_actu+half_lon):
         for x in range(pos_x_actu-half_larg, pos_x_actu+half_larg):
             Geo_Mat[y][x] += delta_temp
