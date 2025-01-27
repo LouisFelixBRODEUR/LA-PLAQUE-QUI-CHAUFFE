@@ -36,7 +36,7 @@ class GUI:
             'longueur_actu' : 15, # mm
             'puissance_actuateur' : 7.1, #W
             'masse_volumique_plaque' : 2698, # kg/m3
-            'epaisseur_plaque_mm' : 3, # mm
+            'epaisseur_plaque_mm' : 1, # mm
             'capacite_thermique_plaque' : 900, # J/Kg*K
             'conductivite_thermique_plaque' : 220, # W/m*K
             'masse_volumique_Air' : 1.293, # kg/m3
@@ -44,7 +44,7 @@ class GUI:
             'conductivite_thermique_Air' : 0.025, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
             'time_step' : 0.01, #sec
-            'simu_duration' : 10, #sec
+            'simu_duration' : 150, #sec
             'animation_lenght' : 100 # frames
         }
 
@@ -59,7 +59,6 @@ class GUI:
         self.Simu_parameters['plaque_largeur'] = self.plaque_width_user_entry.get()
         self.Simu_parameters['plaque_longueur'] = self.plaque_lenght_user_entry.get()
         self.Simu_parameters['position_longueur_actuateur'] = self.lenght_value.get()
-        print(self.width_value.get())
         self.Simu_parameters['position_largeur_actuateur'] = self.width_value.get()
         
 

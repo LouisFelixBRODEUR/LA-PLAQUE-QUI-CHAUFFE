@@ -100,7 +100,7 @@ def Launch_Simu(Parameters):
     # Constante_Air = conductivite_thermique_Air/masse_volumique_Air/capacite_thermique_Air/Fenetre_flux_puissance * time_step
     # Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque/Fenetre_flux_puissance * time_step * (epaisseur_plaque_mm/1000)
     # Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque * time_step / (epaisseur_plaque_mm/1000)
-    Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque * time_step / (epaisseur_plaque_mm/1000)
+    Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque * time_step / (epaisseur_plaque_mm/1000/2)
     # print(f'C Plaque {Constante_plaque}') 
     # print(f'C Air {Constante_Air}')
 
@@ -119,8 +119,10 @@ def Launch_Simu(Parameters):
         Geometry_Matrix = iterate(Geometry_Matrix, Constante_plaque, Constante_Air, Temperature_Ambiante)
         Temp_matrix_list.append(Geometry_Matrix.copy())
         if round(i/iterations*100,3) > loading_queue[0]:
-            print(f'{round(i*time_step, 4)} seconds computed, {loading_queue[0]}% Completed')
+            print(f'{round(i*time_step, 0)} seconds computed, {loading_queue[0]}% Completed')
             loading_queue = loading_queue[1:]
+        if i == iterations-1:
+            print(f'{round(i*time_step, 0)} seconds computed, 100% Completed')
 
     # Annimation
     all_values = [value for matrix in Temp_matrix_list for row in matrix for value in row]
@@ -128,21 +130,41 @@ def Launch_Simu(Parameters):
     min_value_temp = min(all_values)
     display_queue_time = np.linspace(0, simu_duration, animation_lenght)
     for i, matrix in enumerate(Temp_matrix_list):
-            if i*time_step > display_queue_time[0]:
+            if (i+1)*time_step > display_queue_time[0]:
                 display_queue_time = display_queue_time[1:]
                 # max_value_temp = np.max(matrix)
                 # min_value_temp = np.min(matrix)
                 img = plt.imshow(matrix, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp, vmax=max_value_temp)
+                # plt.gcf().canvas.mpl_connect('close_event', on_close)
                 cbar = plt.colorbar(img)
                 cbar.set_label('Temperature')
                 plt.title(f'Temperature Distribution at {round((i*time_step), 4)} seconds')
                 plt.xlabel('X-axis')
                 plt.ylabel('Y-axis')
-                # TODO make it so that animation closes when user clicks X
+
+                if i != 0:
+                    # Set position and zoom from last image
+                    plt.gca().set_xlim(stored_xlim)
+                    plt.gca().set_ylim(stored_ylim)
+                    plt.gca().set_position(stored_position)
                 plt.pause(0.1)
-                plt.clf()
+                # Store position and zoom for next image
+                stored_xlim = plt.gca().get_xlim()
+                stored_ylim = plt.gca().get_ylim()
+                stored_position = plt.gca().get_position()
+                # TODO save home position
+                # TODO remove buttonss from mpl window?
+                
+                if len(display_queue_time) != 0:
+                    plt.clf()
+                else:
+                    print('Animation Done')
 
     plt.show()
+
+def on_close(event, arg='no_test'):
+    print('Figure Closed Need to implement Fucntion to stop animation')
+    
 
 
 My_Params = {
