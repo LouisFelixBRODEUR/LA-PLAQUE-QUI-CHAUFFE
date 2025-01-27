@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 import customtkinter as ctk
 from Simulation import Launch_Simu
+import math
 
 # TODO slider for interest point
 # TODO link simulation and all variables
@@ -135,9 +136,11 @@ class GUI:
         self.plaque_canvas.pack()
         # RedDot
         self.create_rounded_rectangle('gray10')
-        self.red_dot = self.plaque_canvas.create_oval(10, 10, 20, 20, fill="red", outline="red")
+        # self.red_dot = self.plaque_canvas.create_oval(10, 10, 20, 20, fill="red", outline="red")
+        self.red_dot = self.plaque_canvas.create_rectangle(10, 10, 20, 20, fill="red", outline="red")
         # Create horizontal slider for the red square's x position (width)
-        self.lenght_slider = ctk.CTkSlider(self.plaque_info_frame, from_=0, to=int(self.Simu_parameters['plaque_longueur']), number_of_steps=100, command=self.update_red_square, orientation="horizontal")
+        min_max = math.ceil(self.Simu_parameters['longueur_actu']/ 2)
+        self.lenght_slider = ctk.CTkSlider(self.plaque_info_frame, from_=min_max, to=int(self.Simu_parameters['plaque_longueur'])-min_max, number_of_steps=100, command=self.update_actu_red_square, orientation="horizontal")
         self.lenght_slider.set(int(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
         self.lenght_slider.grid(row=5, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
         # Create corresponding Entry for horizontal slider
@@ -147,7 +150,8 @@ class GUI:
         self.lenght_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length"))
         # Create vertical slider for the red square's y position (height)
         slider_height = 300*int(self.Simu_parameters['plaque_largeur'])/int(self.Simu_parameters['plaque_longueur'])
-        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=0, to=int(self.Simu_parameters['plaque_largeur']), number_of_steps=100, command=self.update_red_square, orientation="vertical")
+        min_max = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
+        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=min_max, to=int(self.Simu_parameters['plaque_largeur'])-min_max, number_of_steps=100, command=self.update_actu_red_square, orientation="vertical")
         self.width_slider.set(int(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
         self.width_slider.grid(row=4, column=2, padx=(35,0), pady=(0,0), sticky="w")
         # Create corresponding Entry for vertical slider
@@ -155,7 +159,7 @@ class GUI:
         self.width_value.grid(row=3, column=2, pady=0, padx=(5,0), sticky="s")
         self.width_value.insert(0, str(self.plaque_lenght - self.width_slider.get()))  # Set initial value (reverse the initial y position)
         self.width_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width"))
-        self.update_red_square()
+        self.update_actu_red_square()
 
         # Button for simulation
         self.HW_button = ctk.CTkButton(self.root, text="Lancer la Simulation", command=self.Simulate)
@@ -193,7 +197,7 @@ class GUI:
         self.plaque_canvas.create_rectangle(r, 0, W - r, L, fill=color, outline=color)  # Top and bottom
         self.plaque_canvas.create_rectangle(0, r, W, L - r, fill=color, outline=color)  # Left and right
 
-    def update_red_square(self, event=None):
+    def update_actu_red_square(self, event=None):
         # Get the x position from the width slider (horizontal slider)
         x = self.lenght_slider.get()  
         # Get the y position from the length slider (vertical slider)
@@ -203,7 +207,12 @@ class GUI:
         pos_x_in_pix = x*300/int(self.Simu_parameters['plaque_longueur'])
         pos_y_in_pix = 300*((int(self.Simu_parameters['plaque_largeur'])) - y)/int(self.Simu_parameters['plaque_longueur'])
 
-        self.plaque_canvas.coords(self.red_dot, pos_x_in_pix - 5, pos_y_in_pix - 5, pos_x_in_pix + 5, pos_y_in_pix + 5)
+        half_longueur_actu_in_pix = int(self.Simu_parameters['longueur_actu'])*300/int(self.Simu_parameters['plaque_longueur'])/2
+        # half_largeur_actu_in_pix = 300*((int(self.Simu_parameters['plaque_largeur'])) - int(self.Simu_parameters['largeur_actu']))/int(self.Simu_parameters['plaque_longueur'])/2
+        half_largeur_actu_in_pix = int(self.Simu_parameters['largeur_actu'])*300/int(self.Simu_parameters['plaque_longueur'])/2
+        self.plaque_canvas.coords(self.red_dot, pos_x_in_pix - half_longueur_actu_in_pix, pos_y_in_pix - half_largeur_actu_in_pix, pos_x_in_pix + half_longueur_actu_in_pix, pos_y_in_pix + half_largeur_actu_in_pix)
+
+        # self.plaque_canvas.coords(self.red_dot, pos_x_in_pix - 5, pos_y_in_pix - 5, pos_x_in_pix + 5, pos_y_in_pix + 5)
 
         # Update the corresponding Entry valueshttps://chatgpt.com/c/6793ee06-1830-800a-bef3-c475d0aae5b2
         self.lenght_value.delete(0, ctk.END)
@@ -217,12 +226,14 @@ class GUI:
             if slider_type == "lenght":
                 value = float(self.lenght_value.get())
                 # Ensure value is within slider's range
-                if 0 <= value <= int(self.Simu_parameters['plaque_longueur']):
+                min_max = math.ceil(self.Simu_parameters['longueur_actu']/ 2)
+                if min_max <= value <= int(self.Simu_parameters['plaque_longueur']) - min_max:
                     self.lenght_slider.set(value)
             elif slider_type == "width":
                 value = float(self.width_value.get())
                 # Ensure value is within slider's range (reverse the input value for vertical slider)
-                if 0 <= value <= int(self.Simu_parameters['plaque_largeur']):
+                min_max = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
+                if min_max <= value <= int(self.Simu_parameters['plaque_largeur'])-min_max:
                     self.width_slider.set(value)  # Reverse for vertical slider
         except ValueError:
             pass  # Ignore invalid input (e.g., if the input is not a number)
