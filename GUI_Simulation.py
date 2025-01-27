@@ -36,11 +36,11 @@ class GUI:
             'plaque_longueur' : 116, # mm
             'mm_par_element' : 5, # mm
             'Temperature_Ambiante_C' : 20, # C
-            'position_longueur_actuateur' : 40, # mm
+            'position_longueur_actuateur' : 60, # mm
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm
             'longueur_actu' : 15, # mm
-            'puissance_actuateur' : 5, #W
+            'puissance_actuateur' : 7.1, #W
             'masse_volumique_plaque' : 2698, # kg/m3
             'epaisseur_plaque_mm' : 3, # mm
             'capacite_thermique_plaque' : 900, # J/Kg*K
@@ -50,7 +50,8 @@ class GUI:
             'conductivite_thermique_Air' : 0.025, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
             'time_step' : 0.01, #sec
-            'simu_time' : 200, #sec
+            'simu_duration' : 10, #sec
+            'animation_lenght' : 100 # frames
         }
 
         self.load_frame() # Load initial frame
@@ -63,8 +64,10 @@ class GUI:
         self.Simu_parameters['Coefficient thermique'] = self.coef_therm_user_entry.get()
         self.Simu_parameters['plaque_largeur'] = self.plaque_width_user_entry.get()
         self.Simu_parameters['plaque_longueur'] = self.plaque_lenght_user_entry.get()
-        self.Simu_parameters['position_longueur_actuateur'] = self.width_value.get()
-        self.Simu_parameters['position_largeur_actuateur'] = self.length_value.get()
+        self.Simu_parameters['position_longueur_actuateur'] = self.lenght_value.get()
+        print(self.width_value.get())
+        self.Simu_parameters['position_largeur_actuateur'] = self.width_value.get()
+        
 
     def load_frame(self):
         for widget in self.root.winfo_children():
@@ -134,27 +137,27 @@ class GUI:
         self.create_rounded_rectangle('gray10')
         self.red_dot = self.plaque_canvas.create_oval(10, 10, 20, 20, fill="red", outline="red")
         # Create horizontal slider for the red square's x position (width)
-        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, from_=0, to=int(self.Simu_parameters['plaque_longueur']), number_of_steps=100, command=self.update_red_square, orientation="horizontal")
-        self.width_slider.set(int(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
-        self.width_slider.grid(row=5, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
+        self.lenght_slider = ctk.CTkSlider(self.plaque_info_frame, from_=0, to=int(self.Simu_parameters['plaque_longueur']), number_of_steps=100, command=self.update_red_square, orientation="horizontal")
+        self.lenght_slider.set(int(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
+        self.lenght_slider.grid(row=5, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
         # Create corresponding Entry for horizontal slider
-        self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
-        self.width_value.grid(row=5, column=2, padx=0, pady=(0,5), sticky="w")
-        self.width_value.insert(0, str(self.width_slider.get()))  # Set initial value
-        self.width_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width"))
+        self.lenght_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
+        self.lenght_value.grid(row=5, column=2, padx=0, pady=(0,5), sticky="w")
+        self.lenght_value.insert(0, str(self.lenght_slider.get()))  # Set initial value
+        self.lenght_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length"))
         # Create vertical slider for the red square's y position (height)
         slider_height = 300*int(self.Simu_parameters['plaque_largeur'])/int(self.Simu_parameters['plaque_longueur'])
-        self.length_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=0, to=int(self.Simu_parameters['plaque_largeur']), number_of_steps=100, command=self.update_red_square, orientation="vertical")
-        self.length_slider.set(int(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
-        self.length_slider.grid(row=4, column=2, padx=(35,0), pady=(0,0), sticky="w")
+        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=0, to=int(self.Simu_parameters['plaque_largeur']), number_of_steps=100, command=self.update_red_square, orientation="vertical")
+        self.width_slider.set(int(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
+        self.width_slider.grid(row=4, column=2, padx=(35,0), pady=(0,0), sticky="w")
         # Create corresponding Entry for vertical slider
-        self.length_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
-        self.length_value.grid(row=3, column=2, pady=0, padx=(5,0), sticky="s")
-        self.length_value.insert(0, str(self.plaque_lenght - self.length_slider.get()))  # Set initial value (reverse the initial y position)
-        self.length_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length"))
+        self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=80)
+        self.width_value.grid(row=3, column=2, pady=0, padx=(5,0), sticky="s")
+        self.width_value.insert(0, str(self.plaque_lenght - self.width_slider.get()))  # Set initial value (reverse the initial y position)
+        self.width_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width"))
         self.update_red_square()
 
-        # Button for greetings (Demo-Test)
+        # Button for simulation
         self.HW_button = ctk.CTkButton(self.root, text="Lancer la Simulation", command=self.Simulate)
         self.HW_button.grid(row=2, column=0, columnspan=2, pady=(self.pix_spacing/2, self.pix_spacing), padx=self.pix_spacing, sticky="w")
 
@@ -192,10 +195,10 @@ class GUI:
 
     def update_red_square(self, event=None):
         # Get the x position from the width slider (horizontal slider)
-        x = self.width_slider.get()  
+        x = self.lenght_slider.get()  
         # Get the y position from the length slider (vertical slider)
-        # y = (300 - (300 - self.length_slider.get()))  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
-        y = self.length_slider.get()  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
+        # y = (300 - (300 - self.width_slider.get()))  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
+        y = self.width_slider.get()  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
 
         pos_x_in_pix = x*300/int(self.Simu_parameters['plaque_longueur'])
         pos_y_in_pix = 300*((int(self.Simu_parameters['plaque_largeur'])) - y)/int(self.Simu_parameters['plaque_longueur'])
@@ -203,24 +206,24 @@ class GUI:
         self.plaque_canvas.coords(self.red_dot, pos_x_in_pix - 5, pos_y_in_pix - 5, pos_x_in_pix + 5, pos_y_in_pix + 5)
 
         # Update the corresponding Entry valueshttps://chatgpt.com/c/6793ee06-1830-800a-bef3-c475d0aae5b2
+        self.lenght_value.delete(0, ctk.END)
+        self.lenght_value.insert(0, str(round(x,5)))
         self.width_value.delete(0, ctk.END)
-        self.width_value.insert(0, str(round(x,5)))
-        self.length_value.delete(0, ctk.END)
-        self.length_value.insert(0, str(round(y,5)))  # Update entry with the corrected value for y
+        self.width_value.insert(0, str(round(y,5)))  # Update entry with the corrected value for y
 
     def update_slider_from_entry(self, slider_type):
         """Update slider from entry widget."""
         try:
-            if slider_type == "width":
-                value = float(self.width_value.get())
+            if slider_type == "lenght":
+                value = float(self.lenght_value.get())
                 # Ensure value is within slider's range
                 if 0 <= value <= int(self.Simu_parameters['plaque_longueur']):
-                    self.width_slider.set(value)
-            elif slider_type == "length":
-                value = float(self.length_value.get())
+                    self.lenght_slider.set(value)
+            elif slider_type == "width":
+                value = float(self.width_value.get())
                 # Ensure value is within slider's range (reverse the input value for vertical slider)
                 if 0 <= value <= int(self.Simu_parameters['plaque_largeur']):
-                    self.length_slider.set(value)  # Reverse for vertical slider
+                    self.width_slider.set(value)  # Reverse for vertical slider
         except ValueError:
             pass  # Ignore invalid input (e.g., if the input is not a number)
 

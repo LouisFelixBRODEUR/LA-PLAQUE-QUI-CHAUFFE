@@ -6,60 +6,18 @@ import copy
 
 # TODO Check si Convection OK
 
-My_Params = {
-    'plaque_largeur' : 80, # mm
-    'plaque_longueur' : 140, # mm
-    'mm_par_element' : 5, # mm
-    'Temperature_Ambiante_C' : 20, # C
-    'position_longueur_actuateur' : 40, # mm
-    'position_largeur_actuateur' : 35, # mm
-    'largeur_actu' : 15, # mm
-    'longueur_actu' : 15, # mm
-    'puissance_actuateur' : 5, #W
-    'masse_volumique_plaque' : 2698, # kg/m3
-    'epaisseur_plaque_mm' : 3, # mm
-    'capacite_thermique_plaque' : 900, # J/Kg*K
-    'conductivite_thermique_plaque' : 220, # W/m*K
-    'masse_volumique_Air' : 1.293, # kg/m3
-    'capacite_thermique_Air' : 1005, # J/Kg*K
-    'conductivite_thermique_Air' : 0.025, # W/m*K
-    'coefficient_convection' : 22, # W/m2*K
-    'time_step' : 0.01, #sec
-    'simu_time' : 500, #sec
-}
-
-
 def actuateur_influence(Geo_Mat, Parameters):
-    # plaque_largeur = float(Parameters['plaque_largeur'])
-    # plaque_longueur = float(Parameters['plaque_longueur']) 
-    # mm_par_element = float(Parameters['mm_par_element'])
-    # Temperature_Ambiante_C = float(Parameters['Temperature_Ambiante_C'])
-    # position_longueur_actuateur = float(Parameters['position_longueur_actuateur']) 
-    # position_largeur_actuateur = float(Parameters['position_largeur_actuateur']) 
-    # largeur_actu = float(Parameters['largeur_actu']) 
-    # longueur_actu = float(Parameters['longueur_actu']) 
-    # puissance_actuateur = float(Parameters['puissance_actuateur'])
-    # masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
-    # epaisseur_plaque_mm = float(Parameters['epaisseur_plaque_mm']) 
-    # capacite_thermique_plaque = float(Parameters['capacite_thermique_plaque'])
-    # conductivite_thermique_plaque = float(Parameters['conductivite_thermique_plaque'])
-    # masse_volumique_Air = float(Parameters['masse_volumique_Air'])
-    # capacite_thermique_Air = float(Parameters['capacite_thermique_Air']) 
-    # conductivite_thermique_Air = float(Parameters['conductivite_thermique_Air'])
-    # coefficient_convection = float(Parameters['coefficient_convection']) 
-    # time_step = float(Parameters['time_step'])
-    # simu_time = float(Parameters['simu_time'])
-
     mm_par_element = float(Parameters['mm_par_element'])
-    position_largeur_actuateur = float(Parameters['position_largeur_actuateur'])
-    position_longueur_actuateur = float(Parameters['position_longueur_actuateur']) 
     largeur_actu = float(Parameters['largeur_actu'])
     longueur_actu = float(Parameters['longueur_actu'])
+    plaque_largeur = float(Parameters['plaque_largeur'])
+    position_largeur_actuateur = plaque_largeur - float(Parameters['position_largeur_actuateur'])
+    position_longueur_actuateur = float(Parameters['position_longueur_actuateur'])
     masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
-    capacite_thermique_plaque =float(Parameters['capacite_thermique_plaque'])
+    capacite_thermique_plaque = float(Parameters['capacite_thermique_plaque'])
 
-    pos_x_actu = int(position_largeur_actuateur/mm_par_element)
-    pos_y_actu = int(position_longueur_actuateur/mm_par_element)
+    pos_y_actu = int(position_largeur_actuateur/mm_par_element)
+    pos_x_actu = int(position_longueur_actuateur/mm_par_element)
     largeur_actu_in_element = largeur_actu/mm_par_element
     longueur_actu_in_element = longueur_actu/mm_par_element
     half_larg = int(largeur_actu_in_element/2)
@@ -118,10 +76,10 @@ def Launch_Simu(Parameters):
     plaque_longueur = float(Parameters['plaque_longueur']) 
     mm_par_element = float(Parameters['mm_par_element'])
     Temperature_Ambiante_C = float(Parameters['Temperature_Ambiante_C'])
-    position_longueur_actuateur = float(Parameters['position_longueur_actuateur']) 
-    position_largeur_actuateur = float(Parameters['position_largeur_actuateur']) 
     largeur_actu = float(Parameters['largeur_actu']) 
     longueur_actu = float(Parameters['longueur_actu']) 
+    position_longueur_actuateur = float(Parameters['position_longueur_actuateur']) 
+    position_largeur_actuateur = float(Parameters['position_largeur_actuateur']) 
     puissance_actuateur = float(Parameters['puissance_actuateur'])
     masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
     epaisseur_plaque_mm = float(Parameters['epaisseur_plaque_mm']) 
@@ -132,7 +90,8 @@ def Launch_Simu(Parameters):
     conductivite_thermique_Air = float(Parameters['conductivite_thermique_Air'])
     coefficient_convection = float(Parameters['coefficient_convection']) 
     time_step = float(Parameters['time_step'])
-    simu_time = float(Parameters['simu_time']) 
+    simu_duration = float(Parameters['simu_duration'])
+    animation_lenght = int(Parameters['animation_lenght'])
 
     Temperature_Ambiante = Temperature_Ambiante_C + 273 # C
     Fenetre_flux_puissance = (mm_par_element/1000)*(epaisseur_plaque_mm/1000)
@@ -150,7 +109,7 @@ def Launch_Simu(Parameters):
 
     # Processus iteratif de moyennage avec les voisins
     Temp_matrix_list = []
-    iterations = int(simu_time/time_step)
+    iterations = int(simu_duration/time_step)
 
     Temp_matrix_list.append(Geometry_Matrix.copy())
 
@@ -167,7 +126,7 @@ def Launch_Simu(Parameters):
     all_values = [value for matrix in Temp_matrix_list for row in matrix for value in row]
     max_value_temp = max(all_values)
     min_value_temp = min(all_values)
-    display_queue_time = np.linspace(0, simu_time, 500)
+    display_queue_time = np.linspace(0, simu_duration, animation_lenght)
     for i, matrix in enumerate(Temp_matrix_list):
             if i*time_step > display_queue_time[0]:
                 display_queue_time = display_queue_time[1:]
@@ -179,10 +138,34 @@ def Launch_Simu(Parameters):
                 plt.title(f'Temperature Distribution at {round((i*time_step), 4)} seconds')
                 plt.xlabel('X-axis')
                 plt.ylabel('Y-axis')
-
+                # TODO make it so that animation closes when user clicks X
                 plt.pause(0.1)
                 plt.clf()
 
     plt.show()
 
+
+My_Params = {
+    'Coefficient thermique' : 'abc', # A ENLEVER
+    'plaque_largeur' : 60, # mm
+    'plaque_longueur' : 116, # mm
+    'mm_par_element' : 5, # mm
+    'Temperature_Ambiante_C' : 20, # C
+    'position_longueur_actuateur' : 60, # mm
+    'position_largeur_actuateur' : 30, # mm
+    'largeur_actu' : 15, # mm
+    'longueur_actu' : 15, # mm
+    'puissance_actuateur' : 7.1, #W
+    'masse_volumique_plaque' : 2698, # kg/m3
+    'epaisseur_plaque_mm' : 3, # mm
+    'capacite_thermique_plaque' : 900, # J/Kg*K
+    'conductivite_thermique_plaque' : 220, # W/m*K
+    'masse_volumique_Air' : 1.293, # kg/m3
+    'capacite_thermique_Air' : 1005, # J/Kg*K
+    'conductivite_thermique_Air' : 0.025, # W/m*K
+    'coefficient_convection' : 22, # W/m2*K
+    'time_step' : 0.01, # sec
+    'simu_duration' : 10, # sec
+    'animation_lenght' : 100 # frames
+}
 # Launch_Simu(My_Params)
