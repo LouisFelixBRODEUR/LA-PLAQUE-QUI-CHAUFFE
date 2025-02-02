@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 import customtkinter as ctk
-from Simulation import Launch_Simu
+from Simulation import Plaque
 import math
 import sys
 import json
@@ -211,7 +211,9 @@ class GUI:
 
     def Simulate(self):
         self.Log_parameters()
-        Launch_Simu(self.Simu_parameters)
+        My_plaque = Plaque(self.Simu_parameters)
+        My_plaque.Launch_Simu()
+        # Launch_Simu(self.Simu_parameters)
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')
