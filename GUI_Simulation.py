@@ -10,7 +10,8 @@ import json
 # TODO Graph for interest point
 # TODO add mm label to the entries sliders
 # TODO Export data as excel
-# TODO check params de convec thermique et puissance actu
+# TODO check params de convec thermique et puissance actu to fit avec les tests
+# TODO Format Heatmap animation axis title and ticks (mm)
 
 # TODO save home position (in matplotlib animation display)
 # TODO remove buttonss from mpl window? (in matplotlib animation display)
@@ -37,7 +38,7 @@ class GUI:
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
             'mm_par_element' : 5, # mm # TODO Data entry field
-            'Temperature_Ambiante_C' : 20, # C
+            'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15.5, # mm
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm # TODO Data entry field
@@ -47,21 +48,21 @@ class GUI:
             'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
             'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
             'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
-            'masse_volumique_Air' : 1.293, # kg/m3 # TODO Data entry field
-            'capacite_thermique_Air' : 1005, # J/Kg*K # TODO Data entry field
-            'conductivite_thermique_Air' : 0.025, # W/m*K
-            'coefficient_convection' : 5, # W/m2*K # TODO Data entry field
-            'time_step' : 0.01, #sec # TODO Data entry field
-            'simu_duration' : 250, #sec # TODO Data entry field
-            'animation_lenght' : 100 # frames # TODO Data entry field
+            'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
+            'time_step' : 0.05, #sec # TODO Data entry field
+            'simu_duration' : 350, #sec # TODO Data entry field #TODO Pq la simu plante si trop petit
+            'animation_lenght' : 100, # frames # TODO Data entry field
+            'point_interet_largeur' : 30, # mm # TODO add slider
+            'point_interet_longueur' : 105 # mm # TODO add slider
         }
         self.Initial_parameters = self.Simu_parameters.copy()
 
         self.load_frame() # Load initial frame
 
     def on_closing(self):
+        # Kill programme quand X est clique
         print("Closing the application...")
-        sys.exit()  # This will terminate the program completely
+        sys.exit()
 
     def on_enter_key(self, event):
         self.Log_parameters()
@@ -81,7 +82,6 @@ class GUI:
     def load_simu_params_from_json(self):
         json_path = filedialog.askopenfile(title="Sélectionnez un fichier JSON", filetypes=[("JSON files", "*.json")])
         
-        # if json_path.name != '':
         if json_path != None:
             with open(json_path.name, 'r') as file:
                 self.Simu_parameters = json.load(file)
@@ -201,7 +201,6 @@ class GUI:
         self.Reset_Actu_Posi_button = ctk.CTkButton(self.plaque_info_frame, text="Réinitialiser les Paramètres", command=self.Reset_to_default)
         self.Reset_Actu_Posi_button.grid(row=row_count, column=0, sticky="w", padx = (5, 0), pady=(0,5))
 
-
         # Button for simulation
         self.HW_button = ctk.CTkButton(self.root, text="Lancer la Simulation", command=self.Simulate)
         self.HW_button.grid(row=2, column=0, columnspan=2, pady=(self.pix_spacing/2, self.pix_spacing), padx=self.pix_spacing, sticky="w")
@@ -213,7 +212,6 @@ class GUI:
     def Simulate(self):
         self.Log_parameters()
         Launch_Simu(self.Simu_parameters)
-        # messagebox.showinfo("Info", 'Hello, world!')
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')
@@ -227,23 +225,18 @@ class GUI:
         r = 10
         W = 300
         L = int(300*float(self.Simu_parameters['plaque_largeur'])/float(self.Simu_parameters['plaque_longueur']))
-
         # Coordinates of the rounded rectangle (with rounded corners)
         self.plaque_canvas.create_oval(0, 0, r*2, r*2, fill=color, outline=color)  # Top-left corner
         self.plaque_canvas.create_oval(W - r*2, 0, W, r*2, fill=color, outline=color)  # Top-right corner
         self.plaque_canvas.create_oval(0, L - r*2, r*2, L, fill=color, outline=color)  # Bottom-left corner
         self.plaque_canvas.create_oval(W - r*2, L - r*2, W, L, fill=color, outline=color)  # Bottom-right corner
-
         # Draw the four sides (excluding the corners)
         self.plaque_canvas.create_rectangle(r, 0, W - r, L, fill=color, outline=color)  # Top and bottom
         self.plaque_canvas.create_rectangle(0, r, W, L - r, fill=color, outline=color)  # Left and right
 
     def update_actu_red_square(self, event=None):
-        # Get the x position from the width slider (horizontal slider)
         x = self.lenght_slider.get()  
-        # Get the y position from the length slider (vertical slider)
-        # y = (300 - (300 - self.width_slider.get()))  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
-        y = self.width_slider.get()  # Reverse the y value for the vertical slider to make it move upward as the slider value increases
+        y = self.width_slider.get()
 
         pos_x_in_pix = int(x*300/float(self.Simu_parameters['plaque_longueur']))
         pos_y_in_pix = int(300*((float(self.Simu_parameters['plaque_largeur'])) - y)/float(self.Simu_parameters['plaque_longueur']))
@@ -252,13 +245,10 @@ class GUI:
         half_largeur_actu_in_pix = int(float(self.Simu_parameters['largeur_actu'])*300/float(self.Simu_parameters['plaque_longueur'])/2)
         self.plaque_canvas.coords(self.Actuateur_shape, pos_x_in_pix - half_longueur_actu_in_pix, pos_y_in_pix - half_largeur_actu_in_pix, pos_x_in_pix + half_longueur_actu_in_pix, pos_y_in_pix + half_largeur_actu_in_pix)
 
-        # self.plaque_canvas.coords(self.Actuateur_shape, pos_x_in_pix - 5, pos_y_in_pix - 5, pos_x_in_pix + 5, pos_y_in_pix + 5)
-
-        # Update the corresponding Entry valueshttps://chatgpt.com/c/6793ee06-1830-800a-bef3-c475d0aae5b2
         self.lenght_value.delete(0, ctk.END)
         self.lenght_value.insert(0, str(round(x,5)))
         self.width_value.delete(0, ctk.END)
-        self.width_value.insert(0, str(round(y,5)))  # Update entry with the corrected value for y
+        self.width_value.insert(0, str(round(y,5)))
 
     def update_slider_from_entry(self, slider_type):
         """Update slider from entry widget."""
@@ -271,7 +261,7 @@ class GUI:
                     self.lenght_slider.set(value)
             elif slider_type == "width":
                 value = float(self.width_value.get())
-                # Ensure value is within slider's range (reverse the input value for vertical slider)
+                # Ensure value is within slider's range
                 min_max_for_actu_size = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
                 if min_max_for_actu_size <= value <= float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size:
                     self.width_slider.set(value)  # Reverse for vertical slider

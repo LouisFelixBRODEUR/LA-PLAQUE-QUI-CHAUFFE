@@ -84,22 +84,21 @@ def Launch_Simu(Parameters):
     epaisseur_plaque_mm = float(Parameters['epaisseur_plaque_mm']) 
     capacite_thermique_plaque = float(Parameters['capacite_thermique_plaque'])
     conductivite_thermique_plaque = float(Parameters['conductivite_thermique_plaque'])
-    masse_volumique_Air = float(Parameters['masse_volumique_Air'])
-    capacite_thermique_Air = float(Parameters['capacite_thermique_Air']) 
-    conductivite_thermique_Air = float(Parameters['conductivite_thermique_Air'])
     coefficient_convection = float(Parameters['coefficient_convection']) 
     time_step = float(Parameters['time_step'])
     simu_duration = float(Parameters['simu_duration'])
     animation_lenght = int(Parameters['animation_lenght'])
+    Interest_point_largeur = float(Parameters['point_interet_largeur'])
+    Interest_point_longueur = float(Parameters['point_interet_longueur'])
 
-    Temperature_Ambiante = Temperature_Ambiante_C + 273 # C
+    Temperature_Ambiante = Temperature_Ambiante_C + 273.15 # C
     Constante_plaque = conductivite_thermique_plaque*time_step/masse_volumique_plaque/capacite_thermique_plaque/(mm_par_element/1000)**2
     Constante_Air_top_bot = coefficient_convection*time_step/masse_volumique_plaque/capacite_thermique_plaque/(epaisseur_plaque_mm/1000)
     Constante_Air_side = coefficient_convection*time_step/masse_volumique_plaque/capacite_thermique_plaque/(mm_par_element/1000)
 
-    print(f'C Plaque {Constante_plaque}') 
-    print(f'C Air bot_top {Constante_Air_top_bot}')
-    print(f'C Air sides {Constante_Air_side}')
+    # print(f'C Plaque {Constante_plaque}') 
+    # print(f'C Air bot_top {Constante_Air_top_bot}')
+    # print(f'C Air sides {Constante_Air_side}')
 
     # Temp Initial 
     Geometry_Matrix = np.full((int(plaque_largeur/mm_par_element), int(plaque_longueur/mm_par_element)), float(Temperature_Ambiante))
@@ -121,7 +120,20 @@ def Launch_Simu(Parameters):
         if i == iterations-1:
             print(f'{round(i*time_step, 0)} seconds computed, 100% Completed')
 
-    # Annimation
+    # Interest Point
+    Interest_point_y = int(Interest_point_largeur/plaque_largeur*len(Geometry_Matrix))
+    Interest_point_x = int(Interest_point_longueur/plaque_longueur*len(Geometry_Matrix[0]))
+    Interest_point_data = [mat[Interest_point_y][Interest_point_x] for mat in Temp_matrix_list]
+    Interest_point_data_Celsius = np.array(Interest_point_data) - 273.15
+    time_data = np.arange(0, len(Temp_matrix_list)*time_step, time_step)
+    plt.plot(time_data, Interest_point_data_Celsius)
+    plt.grid(True)
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Temperature (°C)")
+    plt.title(f"Évolution de la température au point d'intérêt\nLongueur:{Interest_point_longueur}mm & Largeur:{Interest_point_largeur}mm")
+    plt.show()
+
+    # HeatMap Animation
     all_values = [value for matrix in Temp_matrix_list for row in matrix for value in row]
     max_value_temp = max(all_values)
     min_value_temp = min(all_values)
@@ -129,15 +141,13 @@ def Launch_Simu(Parameters):
     for i, matrix in enumerate(Temp_matrix_list):
             if (i+1)*time_step > display_queue_time[0]:
                 display_queue_time = display_queue_time[1:]
+                # Uncomment pour avoir la colourbar min max total de la simu ou du frame seulement
                 # max_value_temp = np.max(matrix)
                 # min_value_temp = np.min(matrix)
-                img = plt.imshow(matrix, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp, vmax=max_value_temp)
-                # plt.gcf().canvas.mpl_connect('close_event', on_close)
+                img = plt.imshow(matrix-273.15, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp-273.15, vmax=max_value_temp-273.15)
                 cbar = plt.colorbar(img)
-                cbar.set_label('Temperature (K)')
+                cbar.set_label('Temperature (°C)')
                 plt.title(f'Temperature Distribution at {round((i*time_step), 4)} seconds')
-                # plt.xlabel('X-axis')
-                # plt.ylabel('Y-axis')
 
                 if i != 0:
                     # Set position and zoom from last image
@@ -163,26 +173,24 @@ def on_close(event, arg='no_test'):
 
 
 My_Params = {
-    'Coefficient thermique' : 'abc', # A ENLEVER
     'plaque_largeur' : 60, # mm
     'plaque_longueur' : 116, # mm
-    'mm_par_element' : 5, # mm
-    'Temperature_Ambiante_C' : 20, # C
-    'position_longueur_actuateur' : 60, # mm
+    'mm_par_element' : 5, # mm # TODO Data entry field
+    'Temperature_Ambiante_C' : 25, # C
+    'position_longueur_actuateur' : 15.5, # mm
     'position_largeur_actuateur' : 30, # mm
-    'largeur_actu' : 15, # mm
-    'longueur_actu' : 15, # mm
-    'puissance_actuateur' : 7.1, #W
-    'masse_volumique_plaque' : 2698, # kg/m3
-    'epaisseur_plaque_mm' : 3, # mm
-    'capacite_thermique_plaque' : 900, # J/Kg*K
-    'conductivite_thermique_plaque' : 220, # W/m*K
-    'masse_volumique_Air' : 1.293, # kg/m3
-    'capacite_thermique_Air' : 1005, # J/Kg*K
-    'conductivite_thermique_Air' : 0.025, # W/m*K
-    'coefficient_convection' : 22, # W/m2*K
-    'time_step' : 0.01, # sec
-    'simu_duration' : 10, # sec
-    'animation_lenght' : 100 # frames
+    'largeur_actu' : 15, # mm # TODO Data entry field
+    'longueur_actu' : 15, # mm # TODO Data entry field
+    'puissance_actuateur' : 1.46, #W
+    'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
+    'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
+    'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
+    'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
+    'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
+    'time_step' : 0.05, #sec # TODO Data entry field
+    'simu_duration' : 350, #sec # TODO Data entry field
+    'animation_lenght' : 100, # frames # TODO Data entry field
+    'point_interet_largeur' : 30, # mm # TODO add slider
+    'point_interet_longueur' : 105 # mm # TODO add slider
 }
 # Launch_Simu(My_Params)
