@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import numpy as np
 import time
 import copy
-
-# TODO Check si Convection OK
 
 def actuateur_influence(Geo_Mat, Parameters):
     mm_par_element = float(Parameters['mm_par_element'])
@@ -37,39 +34,38 @@ def actuateur_influence(Geo_Mat, Parameters):
 
 
 # Nouvelle valeur = Moyenne des voisin
-def iterate(Geo_Mat, Cst_Plq, Cst_Air, Temp_Ambi):
+def iterate(Geo_Mat, Cst_Plq, Cst_Air_top, Cst_Air_side, Temp_Ambi):
     Next_Geo_Mat = np.zeros_like(Geo_Mat)
     for y in range(len(Geo_Mat)):
         for x in range(len(Geo_Mat[0])):#Pour chaque Élément
-            if x == 8 and y == 7:
-                pass
             Somme_delta_T_Voisin_Plaque = 0
-            Somme_delta_T_Voisin_Air = 0
+            Somme_delta_T_Voisin_Air_top = 0
+            Somme_delta_T_Voisin_Air_side = 0
             Temp_Element = Geo_Mat[y][x]
             # Si element sur une largeur, Somme_delta_T_Voisin_Air+=1
             if x == 0:
-                Somme_delta_T_Voisin_Air += Temp_Ambi - Temp_Element
+                Somme_delta_T_Voisin_Air_side += Temp_Ambi - Temp_Element
                 Somme_delta_T_Voisin_Plaque += Geo_Mat[y][x+1] - Temp_Element
             elif x == len(Geo_Mat[0])-1:
-                Somme_delta_T_Voisin_Air += Temp_Ambi - Temp_Element
+                Somme_delta_T_Voisin_Air_side += Temp_Ambi - Temp_Element
                 Somme_delta_T_Voisin_Plaque += Geo_Mat[y][x-1] - Temp_Element
             else: # Touche a aucun cote de largeur
                 Somme_delta_T_Voisin_Plaque += Geo_Mat[y][x-1] + Geo_Mat[y][x+1] - 2*Temp_Element
 
             # Si plaque sur une longeur, Somme_delta_T_Voisin_Air+=1
             if y == 0:
-                Somme_delta_T_Voisin_Air += Temp_Ambi - Temp_Element
+                Somme_delta_T_Voisin_Air_side += Temp_Ambi - Temp_Element
                 Somme_delta_T_Voisin_Plaque += Geo_Mat[y+1][x] - Temp_Element
             elif y == len(Geo_Mat)-1:
-                Somme_delta_T_Voisin_Air += Temp_Ambi - Temp_Element
+                Somme_delta_T_Voisin_Air_side += Temp_Ambi - Temp_Element
                 Somme_delta_T_Voisin_Plaque += Geo_Mat[y-1][x] - Temp_Element
             else: # Touche a aucun cote de largeur
                 Somme_delta_T_Voisin_Plaque += Geo_Mat[y+1][x] + Geo_Mat[y-1][x] - 2*Temp_Element
 
             # Somme_delta_T_Voisin_Air+=2 car tout les element ont de lair dessux et en dessous
-            Somme_delta_T_Voisin_Air += 2*(Temp_Ambi - Temp_Element)
+            Somme_delta_T_Voisin_Air_top += 2*(Temp_Ambi - Temp_Element)
 
-            Next_Temp_Element = Temp_Element + Cst_Plq * (Somme_delta_T_Voisin_Plaque) + Cst_Air * (Somme_delta_T_Voisin_Air)
+            Next_Temp_Element = Temp_Element + Cst_Plq * (Somme_delta_T_Voisin_Plaque) + Cst_Air_top * (Somme_delta_T_Voisin_Air_top) + Cst_Air_side * (Somme_delta_T_Voisin_Air_side)
             Next_Geo_Mat[y][x] = Next_Temp_Element
 
     return Next_Geo_Mat
@@ -97,15 +93,13 @@ def Launch_Simu(Parameters):
     animation_lenght = int(Parameters['animation_lenght'])
 
     Temperature_Ambiante = Temperature_Ambiante_C + 273 # C
-    Fenetre_flux_puissance = (mm_par_element/1000)*(epaisseur_plaque_mm/1000)
-    Constante_plaque = conductivite_thermique_plaque/masse_volumique_plaque/capacite_thermique_plaque/Fenetre_flux_puissance * time_step
+    Constante_plaque = conductivite_thermique_plaque*time_step/masse_volumique_plaque/capacite_thermique_plaque/(mm_par_element/1000)**2
+    Constante_Air_top_bot = coefficient_convection*time_step/masse_volumique_plaque/capacite_thermique_plaque/(epaisseur_plaque_mm/1000)
+    Constante_Air_side = coefficient_convection*time_step/masse_volumique_plaque/capacite_thermique_plaque/(mm_par_element/1000)
 
-    # Constante_Air = conductivite_thermique_Air/masse_volumique_Air/capacite_thermique_Air/Fenetre_flux_puissance * time_step
-    # Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque/Fenetre_flux_puissance * time_step * (epaisseur_plaque_mm/1000)
-    # Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque * time_step / (epaisseur_plaque_mm/1000)
-    Constante_Air = coefficient_convection/masse_volumique_plaque/capacite_thermique_plaque * time_step / (epaisseur_plaque_mm/1000/2)
-    # print(f'C Plaque {Constante_plaque}') 
-    # print(f'C Air {Constante_Air}')
+    print(f'C Plaque {Constante_plaque}') 
+    print(f'C Air bot_top {Constante_Air_top_bot}')
+    print(f'C Air sides {Constante_Air_side}')
 
     # Temp Initial 
     Geometry_Matrix = np.full((int(plaque_largeur/mm_par_element), int(plaque_longueur/mm_par_element)), float(Temperature_Ambiante))
@@ -119,7 +113,7 @@ def Launch_Simu(Parameters):
     loading_queue = np.linspace(10,100,10)
     for i in range(iterations):
         Geometry_Matrix = actuateur_influence(Geometry_Matrix, Parameters)
-        Geometry_Matrix = iterate(Geometry_Matrix, Constante_plaque, Constante_Air, Temperature_Ambiante)
+        Geometry_Matrix = iterate(Geometry_Matrix, Constante_plaque, Constante_Air_top_bot, Constante_Air_side, Temperature_Ambiante)
         Temp_matrix_list.append(Geometry_Matrix.copy())
         if round(i/iterations*100,3) > loading_queue[0]:
             print(f'{round(i*time_step, 0)} seconds computed, {loading_queue[0]}% Completed')
@@ -140,10 +134,10 @@ def Launch_Simu(Parameters):
                 img = plt.imshow(matrix, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp, vmax=max_value_temp)
                 # plt.gcf().canvas.mpl_connect('close_event', on_close)
                 cbar = plt.colorbar(img)
-                cbar.set_label('Temperature')
+                cbar.set_label('Temperature (K)')
                 plt.title(f'Temperature Distribution at {round((i*time_step), 4)} seconds')
-                plt.xlabel('X-axis')
-                plt.ylabel('Y-axis')
+                # plt.xlabel('X-axis')
+                # plt.ylabel('Y-axis')
 
                 if i != 0:
                     # Set position and zoom from last image
@@ -155,8 +149,6 @@ def Launch_Simu(Parameters):
                 stored_xlim = plt.gca().get_xlim()
                 stored_ylim = plt.gca().get_ylim()
                 stored_position = plt.gca().get_position()
-                # TODO save home position
-                # TODO remove buttonss from mpl window?
                 
                 if len(display_queue_time) != 0:
                     plt.clf()

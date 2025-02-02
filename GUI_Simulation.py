@@ -7,7 +7,13 @@ import sys
 import json
 
 # TODO slider for interest point
-# TODO link simulation and all variables
+# TODO Graph for interest point
+# TODO add mm label to the entries sliders
+# TODO Export data as excel
+# TODO check params de convec thermique et puissance actu
+
+# TODO save home position (in matplotlib animation display)
+# TODO remove buttonss from mpl window? (in matplotlib animation display)
 
 class GUI:
     def __init__(self):
@@ -32,21 +38,21 @@ class GUI:
             'plaque_longueur' : 116, # mm
             'mm_par_element' : 5, # mm # TODO Data entry field
             'Temperature_Ambiante_C' : 20, # C
-            'position_longueur_actuateur' : 60, # mm
+            'position_longueur_actuateur' : 15.5, # mm
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm # TODO Data entry field
             'longueur_actu' : 15, # mm # TODO Data entry field
-            'puissance_actuateur' : 7.1, #W
+            'puissance_actuateur' : 1.46, #W
             'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
-            'epaisseur_plaque_mm' : 1, # mm # TODO Data entry field
+            'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
             'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
             'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
             'masse_volumique_Air' : 1.293, # kg/m3 # TODO Data entry field
             'capacite_thermique_Air' : 1005, # J/Kg*K # TODO Data entry field
             'conductivite_thermique_Air' : 0.025, # W/m*K
-            'coefficient_convection' : 22, # W/m2*K # TODO Data entry field
+            'coefficient_convection' : 5, # W/m2*K # TODO Data entry field
             'time_step' : 0.01, #sec # TODO Data entry field
-            'simu_duration' : 150, #sec # TODO Data entry field
+            'simu_duration' : 250, #sec # TODO Data entry field
             'animation_lenght' : 100 # frames # TODO Data entry field
         }
         self.Initial_parameters = self.Simu_parameters.copy()
@@ -79,6 +85,7 @@ class GUI:
         if json_path != None:
             with open(json_path.name, 'r') as file:
                 self.Simu_parameters = json.load(file)
+            self.Initial_parameters = self.Simu_parameters.copy()
             self.load_frame()
         else:
             print('No json. Selected')
@@ -104,7 +111,6 @@ class GUI:
         self.Select_path_button = ctk.CTkButton(save_frame, text="Charger les paramètres à partir d'un .json", command=self.load_simu_params_from_json)
         self.Select_path_button.grid(row=1, column=0, sticky="w", padx=(5,0), pady=(0,5))
 
-        # TODO add mm label to the entries
         # Frame for plaque info
         self.plaque_info_frame = ctk.CTkFrame(self.root)
         self.plaque_info_frame.grid(row=1, column=0, columnspan=2, pady=self.pix_spacing/2, padx=self.pix_spacing, sticky="ew")
