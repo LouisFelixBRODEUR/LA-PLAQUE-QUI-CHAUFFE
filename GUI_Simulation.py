@@ -7,14 +7,13 @@ import sys
 import json
 
 # TODO slider for interest point
-# TODO Graph for interest point
+# TODO Graph for 3 interest point
 # TODO add mm label to the entries sliders
 # TODO Export data as excel
 # TODO check params de convec thermique et puissance actu to fit avec les tests
 # TODO Format Heatmap animation axis title and ticks (mm)
-
 # TODO save home position (in matplotlib animation display)
-# TODO remove buttonss from mpl window? (in matplotlib animation display)
+# TODO real time temperature en fonction du temp pour point d'interet
 
 class GUI:
     def __init__(self):
