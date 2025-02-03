@@ -102,20 +102,35 @@ class Plaque:
         self.Temp_matrix_list = []
         iterations_number = int(self.simu_duration/self.time_step)
 
-        self.Temp_matrix_list.append(self.Geometry_Matrix.copy())
+        Interest_point_y = int(self.Interest_point_largeur/self.plaque_largeur*len(self.Geometry_Matrix))
+        Interest_point_x = int(self.Interest_point_longueur/self.plaque_longueur*len(self.Geometry_Matrix[0]))
+        Interest_point_data_C = []
 
         loading_queue = np.linspace(10,100,10)
+        display_queue_time = np.linspace(0, self.simu_duration, self.animation_lenght)
         for i in range(iterations_number):
-            # Geometry_Matrix = actuateur_influence(Geometry_Matrix, Parameters)
-            # Geometry_Matrix = iterate(Geometry_Matrix, Constante_plaque, Constante_Air_top_bot, Constante_Air_side, Temperature_Ambiante)
+            if animation:
+                if (i+1)*self.time_step > display_queue_time[0]:
+                        display_queue_time = display_queue_time[1:]
+                        max_value_temp = np.max(self.Geometry_Matrix)
+                        min_value_temp = np.min(self.Geometry_Matrix)
+                        plt.rcParams['toolbar'] = 'None'  # Disable the toolbar
+                        # img = plt.imshow(self.Geometry_Matrix-273.15, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp-273.15, vmax=max_value_temp-273.15)
+                        img = plt.imshow(self.Geometry_Matrix-273.15, cmap='jet', interpolation='bicubic', vmin=min_value_temp-273.15, vmax=max_value_temp-273.15)
+                        cbar = plt.colorbar(img)
+                        cbar.set_label('Temperature (°C)')
+                        plt.title(f'Temperature Distribution at {round((i*self.time_step), 4)} seconds')
+                        plt.pause(0.1)
             self.actuateur_influence()
             self.iterate()
-            self.Temp_matrix_list.append(self.Geometry_Matrix.copy())
+            Interest_point_data_C.append(self.Geometry_Matrix[Interest_point_y][Interest_point_x] - 273.15)
             if round(i/iterations_number*100,3) > loading_queue[0]:
                 print(f'{round(i*self.time_step, 0)} seconds computed, {loading_queue[0]}% Completed')
                 loading_queue = loading_queue[1:]
             if i == iterations_number-1:
                 print(f'{round(i*self.time_step, 0)} seconds computed, 100% Completed')
+            if len(display_queue_time) != 0:
+                plt.clf()
         
         simu_elapsed_time = time.time() - simu_start_time
         hours, remainder = divmod(simu_elapsed_time, 3600)
@@ -124,48 +139,10 @@ class Plaque:
 
         # Interest Point
         if graph:
-            Interest_point_y = int(self.Interest_point_largeur/self.plaque_largeur*len(self.Geometry_Matrix))
-            Interest_point_x = int(self.Interest_point_longueur/self.plaque_longueur*len(self.Geometry_Matrix[0]))
-            Interest_point_data = [mat[Interest_point_y][Interest_point_x] for mat in self.Temp_matrix_list]
-            Interest_point_data_Celsius = np.array(Interest_point_data) - 273.15
-            time_data = np.arange(0, len(self.Temp_matrix_list)*self.time_step, self.time_step)
-            plt.plot(time_data, Interest_point_data_Celsius)
+            time_data = np.arange(0, iterations_number*self.time_step, self.time_step)
+            plt.plot(time_data, Interest_point_data_C)
             plt.grid(True)
             plt.xlabel("Temps (s)")
             plt.ylabel("Temperature (°C)")
             plt.title(f"Évolution de la température au point d'intérêt\nLongueur:{self.Interest_point_longueur}mm & Largeur:{self.Interest_point_largeur}mm")
-            plt.show()
-
-        # HeatMap Animation
-        if animation:
-            all_values = [value for matrix in self.Temp_matrix_list for row in matrix for value in row]
-            max_value_temp = max(all_values)
-            min_value_temp = min(all_values)
-            display_queue_time = np.linspace(0, self.simu_duration, self.animation_lenght)
-            for i, matrix in enumerate(self.Temp_matrix_list):
-                    if (i+1)*self.time_step > display_queue_time[0]:
-                        display_queue_time = display_queue_time[1:]
-                        # Uncomment pour avoir la colourbar min max total de la simu ou du frame seulement
-                        # max_value_temp = np.max(matrix)
-                        # min_value_temp = np.min(matrix)
-                        img = plt.imshow(matrix-273.15, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp-273.15, vmax=max_value_temp-273.15)
-                        cbar = plt.colorbar(img)
-                        cbar.set_label('Temperature (°C)')
-                        plt.title(f'Temperature Distribution at {round((i*self.time_step), 4)} seconds')
-
-                        if i != 0:
-                            # Set position and zoom from last image
-                            plt.gca().set_xlim(stored_xlim)
-                            plt.gca().set_ylim(stored_ylim)
-                            plt.gca().set_position(stored_position)
-                        plt.pause(0.1)
-                        # Store position and zoom for next image
-                        stored_xlim = plt.gca().get_xlim()
-                        stored_ylim = plt.gca().get_ylim()
-                        stored_position = plt.gca().get_position()
-                        
-                        if len(display_queue_time) != 0:
-                            plt.clf()
-                        else:
-                            print('Animation Done')
             plt.show()

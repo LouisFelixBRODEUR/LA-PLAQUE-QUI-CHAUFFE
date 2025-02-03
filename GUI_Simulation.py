@@ -43,7 +43,7 @@ class GUI:
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm # TODO Data entry field
             'longueur_actu' : 15, # mm # TODO Data entry field
-            'puissance_actuateur' : 1.46, #W
+            'puissance_actuateur' : 6, #W
             'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
             'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
             'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
