@@ -5,15 +5,17 @@ from Simulation import Plaque
 import math
 import sys
 import json
+import time
 
 # TODO slider for interest point
-# TODO Graph for 3 interest point
 # TODO add mm label to the entries sliders
 # TODO Export data as excel
+# TODO save animation as mp4
+# TODO save interest point data
 # TODO check params de convec thermique et puissance actu to fit avec les tests
-# TODO Format Heatmap animation axis title and ticks (mm)
 # TODO save home position (in matplotlib animation display)
-# TODO real time temperature en fonction du temp pour point d'interet
+# TODO refroidissement
+# TODO add contraite pour que C < 0.5
 
 class GUI:
     def __init__(self):
@@ -36,7 +38,7 @@ class GUI:
         self.Simu_parameters = {
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
-            'mm_par_element' : 5, # mm # TODO Data entry field
+            'mm_par_element' : 3, # mm # TODO Data entry field
             'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15.5, # mm
             'position_largeur_actuateur' : 30, # mm
@@ -48,11 +50,15 @@ class GUI:
             'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
             'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
             'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
-            'time_step' : 0.05, #sec # TODO Data entry field
-            'simu_duration' : 350, #sec # TODO Data entry field #TODO Pq la simu plante si trop petit
+            'time_step' : 0.01, #sec # TODO Data entry field
+            'simu_duration' : 50, #sec # TODO Data entry field #TODO Pq la simu plante si trop petit
             'animation_lenght' : 100, # frames # TODO Data entry field
-            'point_interet_largeur' : 30, # mm # TODO add slider
-            'point_interet_longueur' : 105 # mm # TODO add slider
+            'point_interet_1_largeur' : 30, # mm # TODO add slider
+            'point_interet_1_longueur' : 15, # mm # TODO add slider
+            'point_interet_2_largeur' : 30, # mm # TODO add slider
+            'point_interet_2_longueur' : 60, # mm # TODO add slider
+            'point_interet_3_largeur' : 30, # mm # TODO add slider
+            'point_interet_3_longueur' : 105, # mm # TODO add slider
         }
         self.Initial_parameters = self.Simu_parameters.copy()
 
@@ -63,17 +69,18 @@ class GUI:
         print("Closing the application...")
         sys.exit()
 
-    def on_enter_key(self, event):
+    def on_enter_key(self, event=None):
         self.Log_parameters()
         self.load_frame()
 
     def Log_parameters(self):
-        self.Simu_parameters['Temperature_Ambiante_C'] = self.Temp_ambiante_user_entry.get()
-        self.Simu_parameters['plaque_largeur'] = self.plaque_width_user_entry.get()
-        self.Simu_parameters['plaque_longueur'] = self.plaque_lenght_user_entry.get()
-        self.Simu_parameters['position_longueur_actuateur'] = self.lenght_value.get()
-        self.Simu_parameters['position_largeur_actuateur'] = self.width_value.get()
-        self.Simu_parameters['puissance_actuateur'] = self.actu_power_user_entry.get()
+        self.Simu_parameters['Temperature_Ambiante_C'] = float(self.Temp_ambiante_user_entry.get())
+        self.Simu_parameters['plaque_largeur'] = float(self.plaque_width_user_entry.get())
+        self.Simu_parameters['plaque_longueur'] = float(self.plaque_lenght_user_entry.get())
+        self.Simu_parameters['position_longueur_actuateur'] = float(self.lenght_value.get())
+        self.Simu_parameters['position_largeur_actuateur'] = float(self.width_value.get())
+        self.Simu_parameters['puissance_actuateur'] = float(self.actu_power_user_entry.get())
+        self.parameters_correction()
 
     def Test_function(self):
         print(self.Simu_parameters)
@@ -209,10 +216,12 @@ class GUI:
         self.root.grid_columnconfigure(1, weight=1)
 
     def Simulate(self):
-        self.Log_parameters()
+        self.on_enter_key()
         My_plaque = Plaque(self.Simu_parameters)
-        # My_plaque.Launch_Simu()
-        My_plaque.Launch_Simu_mpl_ani()
+        try:
+            My_plaque.Launch_Simu_mpl_ani()
+        except Exception as e:
+            print(f"An error occurred during Simulation: {e}")
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')
@@ -250,6 +259,50 @@ class GUI:
         self.lenght_value.insert(0, str(round(x,5)))
         self.width_value.delete(0, ctk.END)
         self.width_value.insert(0, str(round(y,5)))
+
+    def parameters_correction(self):
+        # Si plaque trop large ou trop longue
+        if self.Simu_parameters['largeur_actu'] > self.Simu_parameters['plaque_largeur']:
+            self.Simu_parameters['plaque_largeur'] = self.Simu_parameters['largeur_actu']
+            print('OUT OF BONDS plaque')
+        if self.Simu_parameters['longueur_actu'] > self.Simu_parameters['plaque_longueur']:
+            self.Simu_parameters['plaque_longueur'] = self.Simu_parameters['longueur_actu']
+            print('OUT OF BONDS plaque')
+        # Si position actuateur hors de la plaque
+        if not(self.Simu_parameters['largeur_actu']/2 < self.Simu_parameters['position_largeur_actuateur'] < self.Simu_parameters['plaque_largeur']-self.Simu_parameters['largeur_actu']/2):
+            self.Simu_parameters['position_largeur_actuateur'] = self.Simu_parameters['plaque_largeur']/2
+            print('OUT OF BONDS actuateur')
+        if not(self.Simu_parameters['longueur_actu']/2 < self.Simu_parameters['position_longueur_actuateur'] < self.Simu_parameters['plaque_longueur']-self.Simu_parameters['longueur_actu']/2):
+            self.Simu_parameters['position_longueur_actuateur'] = self.Simu_parameters['plaque_longueur']/2
+            print('OUT OF BONDS actuateur')
+        # Si point_interet pas dans le range
+        if not (0 <= self.Simu_parameters['point_interet_1_largeur'] <= self.Simu_parameters['plaque_largeur']):
+            self.Simu_parameters['point_interet_1_largeur'] = self.Simu_parameters['plaque_largeur']/2
+            print('OUT OF BONDS point_interet')
+        if not (0 <= self.Simu_parameters['point_interet_1_longueur'] <= self.Simu_parameters['plaque_longueur']):
+            self.Simu_parameters['point_interet_1_longueur'] = self.Simu_parameters['plaque_longueur']/4
+            print('OUT OF BONDS point_interet')
+        if not (0 <= self.Simu_parameters['point_interet_2_largeur'] <= self.Simu_parameters['plaque_largeur']):
+            self.Simu_parameters['point_interet_2_largeur'] = self.Simu_parameters['plaque_largeur']/2
+            print('OUT OF BONDS point_interet')
+        if not (0 <= self.Simu_parameters['point_interet_2_longueur'] <= self.Simu_parameters['plaque_longueur']):
+            self.Simu_parameters['point_interet_2_longueur'] = self.Simu_parameters['plaque_longueur']/2
+            print('OUT OF BONDS point_interet')
+        if not (0 <= self.Simu_parameters['point_interet_3_largeur'] <= self.Simu_parameters['plaque_largeur']):
+            self.Simu_parameters['point_interet_3_largeur'] = self.Simu_parameters['plaque_largeur']/2
+            print('OUT OF BONDS point_interet')
+        if not (0 <= self.Simu_parameters['point_interet_3_longueur'] <= self.Simu_parameters['plaque_longueur']):
+            self.Simu_parameters['point_interet_3_longueur'] = self.Simu_parameters['plaque_longueur']/4*3
+            print('OUT OF BONDS point_interet')
+        # TODO:
+        # SI masse volumique négative
+        # Si capacite_thermique_plaque négative
+        # Si epaisseur_plaque_mm négative
+        # conductivite_thermique_plaque négative
+        # Si time_step négatif
+        # Si simu_duration négatif
+        # Si animation_lenght négatif
+
 
     def update_slider_from_entry(self, slider_type):
         """Update slider from entry widget."""

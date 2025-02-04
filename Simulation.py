@@ -23,17 +23,21 @@ class Plaque:
         self.time_step = float(Parameters['time_step'])
         self.simu_duration = float(Parameters['simu_duration'])
         self.animation_lenght = int(Parameters['animation_lenght'])
-        self.Interest_point_largeur = float(Parameters['point_interet_largeur'])
-        self.Interest_point_longueur = float(Parameters['point_interet_longueur'])
+        self.Interest_point_largeur_1 = float(Parameters['point_interet_1_largeur'])
+        self.Interest_point_longueur_1 = float(Parameters['point_interet_1_longueur'])
+        self.Interest_point_largeur_2 = float(Parameters['point_interet_2_largeur'])
+        self.Interest_point_longueur_2 = float(Parameters['point_interet_2_longueur'])
+        self.Interest_point_largeur_3 = float(Parameters['point_interet_3_largeur'])
+        self.Interest_point_longueur_3 = float(Parameters['point_interet_3_longueur'])
 
         self.Temperature_Ambiante = self.Temperature_Ambiante_C + 273.15 # C
         self.Constante_plaque = self.conductivite_thermique_plaque*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)**2
         self.Constante_Air_top_bot = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.epaisseur_plaque_mm/1000)
         self.Constante_Air_side = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)
 
-        print(f'C Plaque {self.Constante_plaque}') 
-        print(f'C Air bot_top {self.Constante_Air_top_bot}')
-        print(f'C Air sides {self.Constante_Air_side}')
+        # print(f'C Plaque {self.Constante_plaque}') 
+        # print(f'C Air bot_top {self.Constante_Air_top_bot}')
+        # print(f'C Air sides {self.Constante_Air_side}')
 
         # Temp Initial 
         self.Geometry_Matrix = np.full((int(self.plaque_largeur/self.mm_par_element), int(self.plaque_longueur/self.mm_par_element)), float(self.Temperature_Ambiante))
@@ -85,76 +89,47 @@ class Plaque:
         for y in range(pos_y_actu-half_lon, pos_y_actu+half_lon):
             for x in range(pos_x_actu-half_larg, pos_x_actu+half_larg):
                 self.Geometry_Matrix[y][x] += delta_temp
-
-    # def Launch_Simu(self, animation=True, graph = True, save_csv = False, save_MP4 = True):
-    #     simu_start_time = time.time()
-    #     iterations_number = int(self.simu_duration/self.time_step)
-
-    #     Interest_point_y = int(self.Interest_point_largeur/self.plaque_largeur*len(self.Geometry_Matrix))
-    #     Interest_point_x = int(self.Interest_point_longueur/self.plaque_longueur*len(self.Geometry_Matrix[0]))
-    #     Interest_point_data_C = []
-
-    #     loading_queue = np.linspace(10,100,10)
-    #     display_queue_time = np.linspace(0, self.simu_duration, self.animation_lenght)
-    #     for i in range(iterations_number):
-    #         if animation:
-    #             if (i+1)*self.time_step > display_queue_time[0]:
-    #                     display_queue_time = display_queue_time[1:]
-    #                     max_value_temp = np.max(self.Geometry_Matrix)
-    #                     min_value_temp = np.min(self.Geometry_Matrix)
-    #                     plt.rcParams['toolbar'] = 'None'  # Disable the toolbar
-    #                     # img = plt.imshow(self.Geometry_Matrix-273.15, cmap='coolwarm', interpolation='nearest', vmin=min_value_temp-273.15, vmax=max_value_temp-273.15)
-    #                     img = plt.imshow(self.Geometry_Matrix-273.15, cmap='jet', interpolation='bicubic', vmin=min_value_temp-273.15, vmax=max_value_temp-273.15)
-    #                     cbar = plt.colorbar(img)
-    #                     cbar.set_label('Temperature (°C)')
-    #                     plt.title(f'Temperature Distribution at {round((i*self.time_step), 4)} seconds')
-    #                     plt.pause(0.1)
-    #         self.actuateur_influence()
-    #         self.iterate()
-    #         Interest_point_data_C.append(self.Geometry_Matrix[Interest_point_y][Interest_point_x] - 273.15)
-    #         if round(i/iterations_number*100,3) > loading_queue[0]:
-    #             print(f'{round(i*self.time_step, 0)} seconds computed, {loading_queue[0]}% Completed')
-    #             loading_queue = loading_queue[1:]
-    #         if i == iterations_number-1:
-    #             print(f'{round(i*self.time_step, 0)} seconds computed, 100% Completed')
-    #         if len(display_queue_time) != 0:
-    #             plt.clf()
         
-    #     simu_elapsed_time = time.time() - simu_start_time
-    #     hours, remainder = divmod(simu_elapsed_time, 3600)
-    #     minutes, seconds = divmod(remainder, 60)
-    #     print(f'Simulation took {int(hours):02}:{int(minutes):02}:{int(seconds):02} to compute')
-        
-
-    #     # Interest Point
-    #     if graph:
-    #         time_data = np.arange(0, iterations_number*self.time_step, self.time_step)
-    #         plt.plot(time_data, Interest_point_data_C)
-    #         plt.grid(True)
-    #         plt.xlabel("Temps (s)")
-    #         plt.ylabel("Temperature (°C)")
-    #         plt.title(f"Évolution de la température au point d'intérêt\nLongueur:{self.Interest_point_longueur}mm & Largeur:{self.Interest_point_largeur}mm")
-    #         plt.show()
-            
     def Launch_Simu_mpl_ani(self, display_animation=True, save_csv = False, save_MP4 = False):
         simu_start_time = time.time()
         iterations_number = int(self.simu_duration / self.time_step)
 
-        Interest_point_y = int(self.Interest_point_largeur / self.plaque_largeur * len(self.Geometry_Matrix))
-        Interest_point_x = int(self.Interest_point_longueur / self.plaque_longueur * len(self.Geometry_Matrix[0]))
-        Interest_point_data_C = []
+        Interest_point_y_1 = int(self.Interest_point_largeur_1 / self.plaque_largeur * len(self.Geometry_Matrix))
+        Interest_point_x_1 = int(self.Interest_point_longueur_1 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
+        Interest_point_y_2 = int(self.Interest_point_largeur_2 / self.plaque_largeur * len(self.Geometry_Matrix))
+        Interest_point_x_2 = int(self.Interest_point_longueur_2 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
+        Interest_point_y_3 = int(self.Interest_point_largeur_3 / self.plaque_largeur * len(self.Geometry_Matrix))
+        Interest_point_x_3 = int(self.Interest_point_longueur_3 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
+        Interest_point_data_C_1 = []
+        Interest_point_data_C_2 = []
+        Interest_point_data_C_3 = []
 
         # fig, ax = plt.subplots(1,1)
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
         
         img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bicubic')
-        cbar = plt.colorbar(img)
+        cbar = plt.colorbar(img, pad=0.1)
         cbar.set_label('Temperature (°C)')
-        title = ax1.set_title("Temperature Distribution")
+        ax1.scatter(Interest_point_x_1, Interest_point_y_1, color="blue", s=200, marker='x')
+        ax1.scatter(Interest_point_x_2, Interest_point_y_2, color="green", s=200, marker='x')
+        ax1.scatter(Interest_point_x_3, Interest_point_y_3, color="black", s=200, marker='x')
+
+        # Set x-axis ticks en mm
+        x_ticks = np.linspace(-0.5, len(self.Geometry_Matrix[0])-0.5, 5)
+        x_labels = np.linspace(0, self.plaque_longueur, 5).astype(int)
+        ax1.set_xticks(x_ticks)
+        ax1.set_xticklabels([f"{val} mm" for val in x_labels])
+        # Set y-axis ticks en mm
+        y_ticks = np.linspace(-0.5, len(self.Geometry_Matrix)-0.5, 5)
+        y_labels = np.linspace(0, self.plaque_largeur, 5).astype(int)
+        ax1.set_yticks(y_ticks)
+        ax1.set_yticklabels([f"{val} mm" for val in y_labels])
+        ax1.invert_yaxis()
         
-        line, = ax2.plot([], [], 'r-')
+        thermi_1, = ax2.plot([], [], 'b-', label = 'Thermistance 1')
+        thermi_2, = ax2.plot([], [], 'green', label = 'Thermistance 2')
+        thermi_3, = ax2.plot([], [], 'black', label = 'Thermistance Laser')
         time_data = np.arange(0, iterations_number*self.time_step, self.time_step)
-        # plt.plot(time_data, Interest_point_data_C)
         
         ax2.set_xlim(0, iterations_number * self.time_step)
         ax2.set_ylim(-10, 100)  # Adjust Y-limits
@@ -162,6 +137,7 @@ class Plaque:
         ax2.set_xlabel("Temps (s)")
         ax2.set_ylabel("Temperature (°C)")
         ax2.set_title("Temperature des thermistances")
+        ax2.legend()
                 
         display_frame_step = int(iterations_number/self.animation_lenght)
         
@@ -171,7 +147,9 @@ class Plaque:
             for i in range(display_frame_step):
                 self.actuateur_influence()
                 self.iterate()
-                Interest_point_data_C.append(self.Geometry_Matrix[Interest_point_y][Interest_point_x] - 273.15)
+                Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
+                Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
+                Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
                 self.iteration_counter += 1
             # Display result
             max_value_temp = np.max(self.Geometry_Matrix)
@@ -180,24 +158,42 @@ class Plaque:
                 self.min_value_temp = np.min(self.Geometry_Matrix)
             img.set_data(self.Geometry_Matrix - 273.15)
             img.set_clim(self.min_value_temp  - 273.15, max_value_temp - 273.15)
-            ax1.set_title(f'Temperature Distribution at {round(self.iteration_counter * self.time_step, 4)} seconds')
-            # title.set_text(f'Temperature Distribution at {round(self.iteration_counter * self.time_step, 4)} seconds')
+            ax1.set_title(f'Température de la plaque à T = {round(self.iteration_counter * self.time_step, 4)} secondes')
             # Message if last iteration
-            if self.iteration_counter == iterations_number:
+            if self.iteration_counter >= iterations_number:
                 simu_elapsed_time = time.time() - simu_start_time
                 hours, remainder = divmod(simu_elapsed_time, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 print(f'Simulation Complete!\n{self.iteration_counter} iterations computed in {int(hours):02}h {int(minutes):02}m {int(seconds):02}s')
                 
             # Update thermi plot
-            line.set_data(time_data[:self.iteration_counter], Interest_point_data_C) 
+            # if self.iteration_counter <= iterations_number:
+            thermi_1.set_data(time_data[:self.iteration_counter], Interest_point_data_C_1)
+            thermi_2.set_data(time_data[:self.iteration_counter], Interest_point_data_C_2) 
+            thermi_3.set_data(time_data[:self.iteration_counter], Interest_point_data_C_3)
+            # Get data to set the Y lim
+            y1 = thermi_1.get_ydata()
+            y2 = thermi_2.get_ydata()
+            y3 = thermi_3.get_ydata()
+            T_max = np.max([np.max(y1), np.max(y2), np.max(y3)])
+            T_min = np.min([np.min(y1), np.min(y2), np.min(y3)])
+            if T_max > 80:
+                T_max += 20
+            else:
+                T_max = 100
+            if T_min < 10:
+                T_min -= 20
+            else:
+                T_min = -10
+            ax2.set_ylim(T_min, T_max)  # Adjust Y-limits
+
             
             # return img, title
-            return img, line
+            return img, thermi_1, thermi_2, thermi_3
 
         if display_animation:
             self.iteration_counter = 0
-            ani = animation.FuncAnimation(fig, update, frames=range(0,iterations_number, display_frame_step), interval=0, blit=False, repeat=False, cache_frame_data=False)
+            ani = animation.FuncAnimation(fig, update, frames=range(0,iterations_number-display_frame_step, display_frame_step), interval=0, blit=False, repeat=False, cache_frame_data=False)
             plt.show()
 
 
