@@ -6,9 +6,11 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO bug si simu time trop petit
+# TODO checker leffet de time_step et mm+element sur lexactitude de la simu
+# TODO automatiser le set des parametre de sium
+# TODO withdraw main window while simulation
 # TODO slider for interest point
-# TODO add mm label to the entries sliders
+# TODO add mm label to the entries slidersf
 # TODO Export data as excel
 # TODO save animation as mp4
 # TODO save interest point data
@@ -40,7 +42,7 @@ class GUI:
         self.Simu_parameters = {
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
-            'mm_par_element' : 3, # mm # TODO Data entry field
+            'mm_par_element' : 4, # mm # TODO Data entry field
             'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15, # mm
             'position_largeur_actuateur' : 30, # mm
@@ -53,7 +55,7 @@ class GUI:
             'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
             'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
             'time_step' : 0.01, #sec # TODO Data entry field
-            'simu_duration' : 5, #sec # TODO Data entry field #TODO Pq la simu plante si trop petit
+            'simu_duration' : 100, #sec
             'animation_length' : 100, # frames # TODO Data entry field
             'point_interet_1_largeur' : 30, # mm # TODO add slider
             'point_interet_1_longueur' : 15, # mm # TODO add slider
@@ -260,12 +262,14 @@ class GUI:
 
     def Simulate(self):
         self.on_enter_key()
+        self.root.attributes("-disabled", True)
         My_plaque = Plaque(self.Simu_parameters)
         try:
             My_plaque.Launch_Simu_mpl_ani()
         except Exception as e:
             plt.close('all')
             print(f"An error occurred during Simulation: {e}")
+        self.root.attributes("-disabled", False)
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')

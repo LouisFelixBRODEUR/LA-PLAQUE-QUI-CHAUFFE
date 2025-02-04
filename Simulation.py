@@ -101,7 +101,7 @@ class Plaque:
         
     def Launch_Simu_mpl_ani(self, display_animation=True, save_csv = False, save_MP4 = False):
         simu_start_time = time.time()
-        iterations_number = int(self.simu_duration / self.time_step)
+        iterations_number = max(1,int(self.simu_duration / self.time_step))
 
         Interest_point_y_1 = int(self.Interest_point_largeur_1 / self.plaque_largeur * len(self.Geometry_Matrix))
         Interest_point_x_1 = int(self.Interest_point_longueur_1 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
@@ -150,12 +150,13 @@ class Plaque:
         ax2.set_title("Temperature des thermistances")
         ax2.legend()
                 
-        display_frame_step = int(iterations_number/self.animation_length)
+        display_frame_step = max(1,int(iterations_number/self.animation_length))
+
         
         def update(i):
             """ Compute all iterations but display only 100 frames """
             # Compute required number of iterations
-            for i in range(display_frame_step):
+            for j in range(display_frame_step):
                 self.actuateur_influence()
                 self.iterate()
                 Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
