@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 # TODO checker leffet de time_step et mm+element sur lexactitude de la simu
 # TODO automatiser le set des parametre de sium
-# TODO withdraw main window while simulation
 # TODO slider for interest point
 # TODO add mm label to the entries slidersf
 # TODO Export data as excel
