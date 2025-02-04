@@ -211,8 +211,8 @@ class GUI:
     def Simulate(self):
         self.Log_parameters()
         My_plaque = Plaque(self.Simu_parameters)
-        My_plaque.Launch_Simu()
-        # Launch_Simu(self.Simu_parameters)
+        # My_plaque.Launch_Simu()
+        My_plaque.Launch_Simu_mpl_ani()
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')
