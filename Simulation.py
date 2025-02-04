@@ -22,7 +22,7 @@ class Plaque:
         self.coefficient_convection = float(Parameters['coefficient_convection']) 
         self.time_step = float(Parameters['time_step'])
         self.simu_duration = float(Parameters['simu_duration'])
-        self.animation_lenght = int(Parameters['animation_lenght'])
+        self.animation_length = int(Parameters['animation_length'])
         self.Interest_point_largeur_1 = float(Parameters['point_interet_1_largeur'])
         self.Interest_point_longueur_1 = float(Parameters['point_interet_1_longueur'])
         self.Interest_point_largeur_2 = float(Parameters['point_interet_2_largeur'])
@@ -35,7 +35,7 @@ class Plaque:
         self.Constante_Air_top_bot = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.epaisseur_plaque_mm/1000)
         self.Constante_Air_side = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)
 
-        # print(f'C Plaque {self.Constante_plaque}') 
+        print(f'C Plaque {self.Constante_plaque}') 
         # print(f'C Air bot_top {self.Constante_Air_top_bot}')
         # print(f'C Air sides {self.Constante_Air_side}')
 
@@ -75,19 +75,28 @@ class Plaque:
         self.Geometry_Matrix = Next_Geo_Mat
 
     def actuateur_influence(self):
-        pos_y_actu = int(self.position_largeur_actuateur/self.mm_par_element)
-        pos_x_actu = int(self.position_longueur_actuateur/self.mm_par_element)
+        pos_y_actu = max(0,min(len(self.Geometry_Matrix)-1, int(self.position_largeur_actuateur/self.mm_par_element)))
+        pos_x_actu = max(0,min(len(self.Geometry_Matrix[0])-1, int(self.position_longueur_actuateur/self.mm_par_element)))
         largeur_actu_in_element = self.largeur_actu/self.mm_par_element
         longueur_actu_in_element = self.longueur_actu/self.mm_par_element
         half_larg = int(largeur_actu_in_element/2)
         half_lon = int(longueur_actu_in_element/2)
+        # Only heat 1 element if actu is smaller than 1 element
+        if half_larg == 0:
+            Top_range_larg = 1
+        else:
+            Top_range_larg = 0
+        if half_lon == 0:
+            Top_range_lon = 1
+        else:
+            Top_range_lon = 0
 
         Chaleur_en_jeu = self.puissance_actuateur*self.time_step
-        Chaleur_par_element = Chaleur_en_jeu /(largeur_actu_in_element)/(largeur_actu_in_element)
-
+        Chaleur_par_element = Chaleur_en_jeu /(largeur_actu_in_element*largeur_actu_in_element)
         delta_temp = Chaleur_par_element / (self.epaisseur_plaque_mm /1000 * (self.mm_par_element/1000)**2 * self.masse_volumique_plaque) / self.capacite_thermique_plaque
-        for y in range(pos_y_actu-half_lon, pos_y_actu+half_lon):
-            for x in range(pos_x_actu-half_larg, pos_x_actu+half_larg):
+
+        for y in range(pos_y_actu-half_larg, pos_y_actu+half_larg+Top_range_larg):
+            for x in range(pos_x_actu-half_lon, pos_x_actu+half_lon+Top_range_lon):
                 self.Geometry_Matrix[y][x] += delta_temp
         
     def Launch_Simu_mpl_ani(self, display_animation=True, save_csv = False, save_MP4 = False):
@@ -106,8 +115,10 @@ class Plaque:
 
         # fig, ax = plt.subplots(1,1)
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
-        
-        img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bicubic')
+
+        # Interpolate pour une plus belle heat map
+        # img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bilinear')
+        img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet')
         cbar = plt.colorbar(img, pad=0.1)
         cbar.set_label('Temperature (°C)')
         ax1.scatter(Interest_point_x_1, Interest_point_y_1, color="blue", s=200, marker='x')
@@ -139,7 +150,7 @@ class Plaque:
         ax2.set_title("Temperature des thermistances")
         ax2.legend()
                 
-        display_frame_step = int(iterations_number/self.animation_lenght)
+        display_frame_step = int(iterations_number/self.animation_length)
         
         def update(i):
             """ Compute all iterations but display only 100 frames """
