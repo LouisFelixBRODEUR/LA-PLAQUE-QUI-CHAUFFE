@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 # TODO checker leffet de time_step et mm+element sur lexactitude de la simu
 # TODO automatiser le set des parametre de sium
 # TODO slider for interest point
-# TODO add mm label to the entries slidersf
+# TODO add mm label to the entries sliders
 # TODO Export data as excel
 # TODO save animation as mp4
 # TODO save interest point data
@@ -21,7 +21,7 @@ class GUI:
     def __init__(self):
         # Initialize root window
         self.root = ctk.CTk()
-        self.root.geometry("900x780")
+        self.root.geometry("700x780")
         self.background_color = "#1e1e1e" # Dark gray background
         self.root.configure(bg=self.background_color)
         self.root.title("Controleur Simulation")
@@ -41,19 +41,19 @@ class GUI:
         self.Simu_parameters = {
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
-            'mm_par_element' : 4, # mm # TODO Data entry field
+            'mm_par_element' : 4, # mm # TODO Automatic set
             'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15, # mm
             'position_largeur_actuateur' : 30, # mm
-            'largeur_actu' : 15, # mm # TODO Data entry field
-            'longueur_actu' : 15, # mm # TODO Data entry field
+            'largeur_actu' : 15, # mm
+            'longueur_actu' : 15, # mm
             'puissance_actuateur' : 6, #W
             'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
             'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
             'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
             'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
             'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
-            'time_step' : 0.01, #sec # TODO Data entry field
+            'time_step' : 0.01, #sec # TODO Automatic set
             'simu_duration' : 100, #sec
             'animation_length' : 100, # frames # TODO Data entry field
             'point_interet_1_largeur' : 30, # mm # TODO add slider
