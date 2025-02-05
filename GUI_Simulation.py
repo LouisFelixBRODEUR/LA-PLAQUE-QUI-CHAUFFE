@@ -6,7 +6,7 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO checker leffet de time_step et mm+element sur lexactitude de la simu
+# TODO time_step et mm_par_element change beaucoup trop le resultat de la simu A VOIR
 # TODO automatiser le set des parametre de sim
 # TODO slider for interest point
 # TODO add mm label to the entries sliders
@@ -40,7 +40,7 @@ class GUI:
         self.Simu_parameters = {
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
-            'mm_par_element' : 4, # mm # TODO Automatic set
+            'mm_par_element' : 3, # mm # TODO Automatic set
             'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15, # mm
             'position_largeur_actuateur' : 30, # mm
@@ -51,9 +51,9 @@ class GUI:
             'epaisseur_plaque_mm' : 1.5, # mm
             'capacite_thermique_plaque' : 900, # J/Kg*K
             'conductivite_thermique_plaque' : 220, # W/m*K
-            'coefficient_convection' : 10, # W/m2*K
-            'time_step' : 0.03, #sec # TODO Automatic set
-            'simu_duration' : 106, #sec
+            'coefficient_convection' : 22, # W/m2*K
+            'time_step' : 0.01, #sec # TODO Automatic set
+            'simu_duration' : 100, #sec
             'animation_length' : 100, # frames # TODO Automatic set == simu_duration?
             'point_interet_1_largeur' : 30, # mm # TODO add slider
             'point_interet_1_longueur' : 15, # mm # TODO add slider

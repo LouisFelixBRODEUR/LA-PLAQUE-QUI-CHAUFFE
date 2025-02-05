@@ -22,7 +22,8 @@ class Plaque:
         self.coefficient_convection = float(Parameters['coefficient_convection']) 
         self.time_step = float(Parameters['time_step'])
         self.simu_duration = float(Parameters['simu_duration'])
-        self.animation_length = int(Parameters['animation_length'])
+        self.animation_length = float(Parameters['simu_duration'])
+        # self.animation_length = int(Parameters['animation_length'])
         self.Interest_point_largeur_1 = float(Parameters['point_interet_1_largeur'])
         self.Interest_point_longueur_1 = float(Parameters['point_interet_1_longueur'])
         self.Interest_point_largeur_2 = float(Parameters['point_interet_2_largeur'])
@@ -191,16 +192,17 @@ class Plaque:
             y1 = thermi_1.get_ydata()
             y2 = thermi_2.get_ydata()
             y3 = thermi_3.get_ydata()
-            T_max = np.max([np.max(y1), np.max(y2), np.max(y3)])
-            T_min = np.min([np.min(y1), np.min(y2), np.min(y3)])
-            if T_max > 80:
-                T_max += 20
-            else:
-                T_max = 100
-            if T_min < 10:
-                T_min -= 20
-            else:
-                T_min = -10
+            # FOllow the min and max
+            T_max = np.max([np.max(y1), np.max(y2), np.max(y3)]) + 20
+            T_min = np.min([np.min(y1), np.min(y2), np.min(y3)]) - 20
+            # if T_max > 80:
+            #     T_max += 20
+            # else:
+            #     T_max = 100
+            # if T_min < 10:
+            #     T_min -= 20
+            # else:
+            #     T_min = -10
             ax2.set_ylim(T_min, T_max)  # Adjust Y-limits
             
             return img, thermi_1, thermi_2, thermi_3
