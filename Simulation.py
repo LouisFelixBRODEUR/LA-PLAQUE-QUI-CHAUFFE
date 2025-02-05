@@ -113,7 +113,6 @@ class Plaque:
         Interest_point_data_C_2 = []
         Interest_point_data_C_3 = []
 
-        # fig, ax = plt.subplots(1,1)
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
 
         # Interpolate pour une plus belle heat map
@@ -143,8 +142,8 @@ class Plaque:
         
         display_frame_step = max(1,int(iterations_number/self.animation_length))
         
-        time_data = np.arange(0, (iterations_number+1)*self.time_step, self.time_step)
-        # time_data = np.arange(0, (iterations_number+1)*self.time_step, display_frame_step*self.time_step)
+        # time_data = np.append(np.arange(0, (iterations_number+display_frame_step)*self.time_step, display_frame_step*self.time_step),(iterations_number+display_frame_step)*self.time_step)
+        time_data = np.append(np.arange(0, iterations_number*self.time_step, display_frame_step*self.time_step),iterations_number*self.time_step)
         
         ax2.set_xlim(0, iterations_number * self.time_step)
         ax2.set_ylim(-10, 100)  # Adjust Y-limits
@@ -162,10 +161,10 @@ class Plaque:
             for j in range(display_frame_step):
                 self.actuateur_influence()
                 self.iterate()
-                Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
-                Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
-                Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
                 self.iteration_counter += 1
+            Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
+            Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
+            Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
             # Display result
             max_value_temp = np.max(self.Geometry_Matrix)
             # Set the lowest temp on first iteration
@@ -181,14 +180,13 @@ class Plaque:
                 hours, remainder = divmod(simu_elapsed_time, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 print(f'Simulation Complete!\n{self.iteration_counter} iterations computed in {int(hours):02}h {int(minutes):02}m {int(seconds):02}s')
-                final_time_data = np.append(time_data, [(iterations_number+1) * self.time_step])
-                thermi_1.set_data(final_time_data, Interest_point_data_C_1)
-                thermi_2.set_data(final_time_data, Interest_point_data_C_2) 
-                thermi_3.set_data(final_time_data, Interest_point_data_C_3)
-            else:
-                thermi_1.set_data(time_data[:self.iteration_counter], Interest_point_data_C_1)
-                thermi_2.set_data(time_data[:self.iteration_counter], Interest_point_data_C_2) 
-                thermi_3.set_data(time_data[:self.iteration_counter], Interest_point_data_C_3)
+                Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
+                Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
+                Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
+            actual_time_data = time_data[:len(Interest_point_data_C_1)]
+            thermi_1.set_data(actual_time_data, Interest_point_data_C_1)
+            thermi_2.set_data(actual_time_data, Interest_point_data_C_2) 
+            thermi_3.set_data(actual_time_data, Interest_point_data_C_3)
             # Get data to set the Y lim
             y1 = thermi_1.get_ydata()
             y2 = thermi_2.get_ydata()
@@ -204,9 +202,7 @@ class Plaque:
             else:
                 T_min = -10
             ax2.set_ylim(T_min, T_max)  # Adjust Y-limits
-
             
-            # return img, title
             return img, thermi_1, thermi_2, thermi_3
 
         if display_animation:
@@ -214,7 +210,6 @@ class Plaque:
             ani = animation.FuncAnimation(fig, update, frames=range(0,iterations_number-display_frame_step, display_frame_step), interval=0, blit=False, repeat=False, cache_frame_data=False)
             plt.show()
 
-
-        # Save as MP4 if required
+        # Save as MP4
         if save_MP4:
             ani.save("simulation.mp4", writer="ffmpeg")

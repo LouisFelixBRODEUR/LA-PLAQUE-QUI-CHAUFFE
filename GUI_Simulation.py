@@ -84,14 +84,7 @@ class GUI:
         self.Simu_parameters['puissance_actuateur'] = float(self.actu_power_user_entry.get())
         self.Simu_parameters['largeur_actu'] = float(self.actu_width_user_entry.get())
         self.Simu_parameters['longueur_actu'] = float(self.actu_length_user_entry.get())
-        self.Simu_parameters['simu_duration'] = float(self.simu_length_user_entry.get())
-        
-        # 'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
-        # 'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
-        # 'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
-        # 'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
-        # 'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
-        
+        self.Simu_parameters['simu_duration'] = float(self.simu_length_user_entry.get())        
         self.Simu_parameters['masse_volumique_plaque'] = float(self.masse_volumique_plaque_user_entry.get())
         self.Simu_parameters['epaisseur_plaque_mm'] = float(self.epaisseur_plaque_mm_user_entry.get())
         self.Simu_parameters['capacite_thermique_plaque'] = float(self.capacite_thermique_plaque_user_entry.get())
@@ -345,12 +338,12 @@ class GUI:
         r = 10
         W = self.plaque_length
         L = self.plaque_width
-        # Coordinates of the rounded rectangle (with rounded corners)
+        # Coordinates of the rounded rectangles
         self.plaque_canvas.create_oval(0, 0, r*2, r*2, fill=color, outline=color)  # Top-left corner
         self.plaque_canvas.create_oval(W - r*2, 0, W, r*2, fill=color, outline=color)  # Top-right corner
         self.plaque_canvas.create_oval(0, L - r*2, r*2, L, fill=color, outline=color)  # Bottom-left corner
         self.plaque_canvas.create_oval(W - r*2, L - r*2, W, L, fill=color, outline=color)  # Bottom-right corner
-        # Draw the four sides (excluding the corners)
+        # 4 cotes
         self.plaque_canvas.create_rectangle(r, 0, W - r, L, fill=color, outline=color)  # Top and bottom
         self.plaque_canvas.create_rectangle(0, r, W, L - r, fill=color, outline=color)  # Left and right
 
