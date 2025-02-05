@@ -140,7 +140,11 @@ class Plaque:
         thermi_1, = ax2.plot([], [], 'b-', label = 'Thermistance 1')
         thermi_2, = ax2.plot([], [], 'green', label = 'Thermistance 2')
         thermi_3, = ax2.plot([], [], 'black', label = 'Thermistance Laser')
-        time_data = np.arange(0, iterations_number*self.time_step, self.time_step)
+        
+        display_frame_step = max(1,int(iterations_number/self.animation_length))
+        
+        time_data = np.arange(0, (iterations_number+1)*self.time_step, self.time_step)
+        # time_data = np.arange(0, (iterations_number+1)*self.time_step, display_frame_step*self.time_step)
         
         ax2.set_xlim(0, iterations_number * self.time_step)
         ax2.set_ylim(-10, 100)  # Adjust Y-limits
@@ -150,7 +154,6 @@ class Plaque:
         ax2.set_title("Temperature des thermistances")
         ax2.legend()
                 
-        display_frame_step = max(1,int(iterations_number/self.animation_length))
 
         
         def update(i):
@@ -173,16 +176,19 @@ class Plaque:
             ax1.set_title(f'Température de la plaque à T = {round(self.iteration_counter * self.time_step, 4)} secondes')
             # Message if last iteration
             if self.iteration_counter >= iterations_number:
+                print('done')
                 simu_elapsed_time = time.time() - simu_start_time
                 hours, remainder = divmod(simu_elapsed_time, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 print(f'Simulation Complete!\n{self.iteration_counter} iterations computed in {int(hours):02}h {int(minutes):02}m {int(seconds):02}s')
-                
-            # Update thermi plot
-            # if self.iteration_counter <= iterations_number:
-            thermi_1.set_data(time_data[:self.iteration_counter], Interest_point_data_C_1)
-            thermi_2.set_data(time_data[:self.iteration_counter], Interest_point_data_C_2) 
-            thermi_3.set_data(time_data[:self.iteration_counter], Interest_point_data_C_3)
+                final_time_data = np.append(time_data, [(iterations_number+1) * self.time_step])
+                thermi_1.set_data(final_time_data, Interest_point_data_C_1)
+                thermi_2.set_data(final_time_data, Interest_point_data_C_2) 
+                thermi_3.set_data(final_time_data, Interest_point_data_C_3)
+            else:
+                thermi_1.set_data(time_data[:self.iteration_counter], Interest_point_data_C_1)
+                thermi_2.set_data(time_data[:self.iteration_counter], Interest_point_data_C_2) 
+                thermi_3.set_data(time_data[:self.iteration_counter], Interest_point_data_C_3)
             # Get data to set the Y lim
             y1 = thermi_1.get_ydata()
             y2 = thermi_2.get_ydata()

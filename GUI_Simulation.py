@@ -7,7 +7,7 @@ import json
 import matplotlib.pyplot as plt
 
 # TODO checker leffet de time_step et mm+element sur lexactitude de la simu
-# TODO automatiser le set des parametre de sium
+# TODO automatiser le set des parametre de sim
 # TODO slider for interest point
 # TODO add mm label to the entries sliders
 # TODO Export data as excel
@@ -15,13 +15,12 @@ import matplotlib.pyplot as plt
 # TODO save interest point data
 # TODO check params de convec thermique et puissance actu to fit avec les tests
 # TODO refroidissement
-# TODO add contraite pour que C < 0.5s
 
 class GUI:
     def __init__(self):
         # Initialize root window
         self.root = ctk.CTk()
-        self.root.geometry("700x780")
+        self.root.geometry("800x800")
         self.background_color = "#1e1e1e" # Dark gray background
         self.root.configure(bg=self.background_color)
         self.root.title("Controleur Simulation")
@@ -48,14 +47,14 @@ class GUI:
             'largeur_actu' : 15, # mm
             'longueur_actu' : 15, # mm
             'puissance_actuateur' : 6, #W
-            'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
-            'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
-            'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
-            'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
-            'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
-            'time_step' : 0.01, #sec # TODO Automatic set
-            'simu_duration' : 100, #sec
-            'animation_length' : 100, # frames # TODO Data entry field
+            'masse_volumique_plaque' : 2698, # kg/m3
+            'epaisseur_plaque_mm' : 1.5, # mm
+            'capacite_thermique_plaque' : 900, # J/Kg*K
+            'conductivite_thermique_plaque' : 220, # W/m*K
+            'coefficient_convection' : 10, # W/m2*K
+            'time_step' : 0.03, #sec # TODO Automatic set
+            'simu_duration' : 106, #sec
+            'animation_length' : 100, # frames # TODO Automatic set == simu_duration?
             'point_interet_1_largeur' : 30, # mm # TODO add slider
             'point_interet_1_longueur' : 15, # mm # TODO add slider
             'point_interet_2_largeur' : 30, # mm # TODO add slider
@@ -86,6 +85,19 @@ class GUI:
         self.Simu_parameters['largeur_actu'] = float(self.actu_width_user_entry.get())
         self.Simu_parameters['longueur_actu'] = float(self.actu_length_user_entry.get())
         self.Simu_parameters['simu_duration'] = float(self.simu_length_user_entry.get())
+        
+        # 'masse_volumique_plaque' : 2698, # kg/m3 # TODO Data entry field
+        # 'epaisseur_plaque_mm' : 1.5, # mm # TODO Data entry field
+        # 'capacite_thermique_plaque' : 900, # J/Kg*K # TODO Data entry field
+        # 'conductivite_thermique_plaque' : 220, # W/m*K # TODO Data entry field
+        # 'coefficient_convection' : 10, # W/m2*K # TODO Data entry field
+        
+        self.Simu_parameters['masse_volumique_plaque'] = float(self.masse_volumique_plaque_user_entry.get())
+        self.Simu_parameters['epaisseur_plaque_mm'] = float(self.epaisseur_plaque_mm_user_entry.get())
+        self.Simu_parameters['capacite_thermique_plaque'] = float(self.capacite_thermique_plaque_user_entry.get())
+        self.Simu_parameters['conductivite_thermique_plaque'] = float(self.conductivite_thermique_plaque_user_entry.get())
+        self.Simu_parameters['coefficient_convection'] = float(self.coefficient_convection_user_entry.get())
+        
         self.parameters_correction()
 
     def Test_function(self):
@@ -129,6 +141,7 @@ class GUI:
         self.plaque_info_frame.columnconfigure(0, weight=0)
         self.plaque_info_frame.columnconfigure(1, weight=0)
         row_count = 0 # Facilite lajout de plus de widget
+        row_count2 = 0
 
         # Reset Boutton
         self.Reset_Actu_Posi_button = ctk.CTkButton(self.plaque_info_frame, text="Réinitialiser les Paramètres", command=self.Reset_to_default)
@@ -137,13 +150,63 @@ class GUI:
 
         # Label for Temp Ambiante
         Temp_Ambi_label = ctk.CTkLabel(self.plaque_info_frame, text="Température ambiante (°C) : ")
-        Temp_Ambi_label.grid(row=row_count, column=0, sticky="w", padx=(5,0), pady=(0,0))
+        Temp_Ambi_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
         # data Entry for Temp Ambiante 
         self.Temp_ambiante_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
         self.Temp_ambiante_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.Temp_ambiante_user_entry.insert("1", str(self.Simu_parameters['Temperature_Ambiante_C']))
-        self.Temp_ambiante_user_entry.grid(row=row_count, column=1, sticky="w", pady=(0,0))
-        row_count+=1
+        self.Temp_ambiante_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
+                
+        # Label for masse_volumique_plaque
+        masse_volumique_plaque_label = ctk.CTkLabel(self.plaque_info_frame, text="Masse volumique (kg/m³) : ")
+        masse_volumique_plaque_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        # data Entry for masse_volumique_plaque 
+        self.masse_volumique_plaque_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.masse_volumique_plaque_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.masse_volumique_plaque_user_entry.insert("1", str(self.Simu_parameters['masse_volumique_plaque']))
+        self.masse_volumique_plaque_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
+        
+        # Label for capacite_thermique_plaque
+        capacite_thermique_plaque_label = ctk.CTkLabel(self.plaque_info_frame, text="Capacité Thermique (J/Kg·K) : ")
+        capacite_thermique_plaque_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        # data Entry for capacite_thermique_plaque
+        self.capacite_thermique_plaque_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.capacite_thermique_plaque_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.capacite_thermique_plaque_user_entry.insert("1", str(self.Simu_parameters['capacite_thermique_plaque']))
+        self.capacite_thermique_plaque_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
+        
+        # Label for coefficient_convection
+        coefficient_convection_label = ctk.CTkLabel(self.plaque_info_frame, text="Coefficient de convection (W/m²·K) : ")
+        coefficient_convection_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        # data Entry for coefficient_convection
+        self.coefficient_convection_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.coefficient_convection_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.coefficient_convection_user_entry.insert("1", str(self.Simu_parameters['coefficient_convection']))
+        self.coefficient_convection_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
+        
+        # Label for epaisseur_plaque_mm
+        epaisseur_plaque_mm_label = ctk.CTkLabel(self.plaque_info_frame, text="Épaisseur de la plaque (mm) : ")
+        epaisseur_plaque_mm_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        # data Entry for epaisseur_plaque_mm 
+        self.epaisseur_plaque_mm_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.epaisseur_plaque_mm_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.epaisseur_plaque_mm_user_entry.insert("1", str(self.Simu_parameters['epaisseur_plaque_mm']))
+        self.epaisseur_plaque_mm_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
+        
+        # Label for conductivite_thermique_plaque
+        conductivite_thermique_plaque_label = ctk.CTkLabel(self.plaque_info_frame, text="Conductivité thermique (W/m·K) : ")
+        conductivite_thermique_plaque_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        # data Entry for conductivite_thermique_plaque
+        self.conductivite_thermique_plaque_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.conductivite_thermique_plaque_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.conductivite_thermique_plaque_user_entry.insert("1", str(self.Simu_parameters['conductivite_thermique_plaque']))
+        self.conductivite_thermique_plaque_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
 
         # Label for plaque width
         plaque_width = ctk.CTkLabel(self.plaque_info_frame, text="Largeur de la plaque (mm) : ")
