@@ -16,13 +16,12 @@ import matplotlib.pyplot as plt
 # TODO check params de convec thermique et puissance actu to fit avec les tests
 # TODO refroidissement
 # TODO add contraite pour que C < 0.5s
-# TODO Rescale si largeur de la plaque trop big
 
 class GUI:
     def __init__(self):
         # Initialize root window
         self.root = ctk.CTk()
-        self.root.geometry("900x700")
+        self.root.geometry("900x780")
         self.background_color = "#1e1e1e" # Dark gray background
         self.root.configure(bg=self.background_color)
         self.root.title("Controleur Simulation")
@@ -36,6 +35,7 @@ class GUI:
         # Initialize variables
         self.pix_spacing = 20
         self.pix_to_plaque_box = 3
+        self.plaque_display_size = 300
         self.Save_as_path = "Aucune Sélection"
 
         self.Simu_parameters = {
@@ -201,8 +201,8 @@ class GUI:
         PosActu_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         row_count += 1
         # Plaque
-        self.plaque_width = int(300*float(self.Simu_parameters['plaque_largeur'])/float(self.Simu_parameters['plaque_longueur']))
-        self.plaque_length = 300
+        self.plaque_width = min(self.plaque_display_size, int(self.plaque_display_size*float(self.Simu_parameters['plaque_largeur'])/float(self.Simu_parameters['plaque_longueur'])))
+        self.plaque_length = min(self.plaque_display_size, int(self.plaque_display_size*float(self.Simu_parameters['plaque_longueur'])/float(self.Simu_parameters['plaque_largeur'])))
         self.plaque_box_frame = ctk.CTkFrame(self.plaque_info_frame, height=self.plaque_width, width=self.plaque_length, fg_color="black")
         self.plaque_box_frame.grid(row=row_count, column=0, pady=(5,5), columnspan = 2, padx=10)
         self.plaque_canvas = ctk.CTkCanvas(self.plaque_box_frame, height=self.plaque_width, width=self.plaque_length, bg='#2B2B2B', bd=0, highlightthickness=0)
@@ -212,7 +212,7 @@ class GUI:
         row_count += 1
         # Create horizontal slider for the red square's x position (width)
         min_max_for_actu_size = math.ceil(self.Simu_parameters['longueur_actu']/ 2)
-        self.length_slider = ctk.CTkSlider(self.plaque_info_frame, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_longueur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="horizontal", button_color="#ff4242")
+        self.length_slider = ctk.CTkSlider(self.plaque_info_frame, width=self.plaque_length, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_longueur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="horizontal", button_color="#ff4242")
         self.length_slider.set(float(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
         self.length_slider.grid(row=row_count, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
         # Create corresponding Entry for horizontal slider
@@ -221,9 +221,9 @@ class GUI:
         self.length_value.insert(0, str(self.length_slider.get()))  # Set initial value
         self.length_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length"))
         # Create vertical slider for the red square's y position (height)
-        slider_height = int(300*float(self.Simu_parameters['plaque_largeur'])/float(self.Simu_parameters['plaque_longueur']))
         min_max_for_actu_size = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
-        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=slider_height, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="vertical", button_color="#ff4242")
+        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=self.plaque_width, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="vertical", button_color="#ff4242")
+        # print(float(self.Simu_parameters['position_largeur_actuateur']))
         self.width_slider.set(float(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
         self.width_slider.grid(row=row_count-1, column=2, padx=(35,0), pady=(0,0), sticky="w")
         # Create corresponding Entry for vertical slider
@@ -280,8 +280,8 @@ class GUI:
     def create_rounded_rectangle(self, color):
         """Draw a rectangle with rounded corners."""
         r = 10
-        W = 300
-        L = int(300*float(self.Simu_parameters['plaque_largeur'])/float(self.Simu_parameters['plaque_longueur']))
+        W = self.plaque_length
+        L = self.plaque_width
         # Coordinates of the rounded rectangle (with rounded corners)
         self.plaque_canvas.create_oval(0, 0, r*2, r*2, fill=color, outline=color)  # Top-left corner
         self.plaque_canvas.create_oval(W - r*2, 0, W, r*2, fill=color, outline=color)  # Top-right corner
@@ -303,10 +303,10 @@ class GUI:
     def update_red_square(self, event=None):
         x = self.length_slider.get()  
         y = self.width_slider.get()
-        pos_x_in_pix = int(x*300/float(self.Simu_parameters['plaque_longueur']))
-        pos_y_in_pix = int(300*((float(self.Simu_parameters['plaque_largeur'])) - y)/float(self.Simu_parameters['plaque_longueur']))
-        half_longueur_actu_in_pix = int(float(self.Simu_parameters['longueur_actu'])*300/float(self.Simu_parameters['plaque_longueur'])/2)
-        half_largeur_actu_in_pix = int(float(self.Simu_parameters['largeur_actu'])*300/float(self.Simu_parameters['plaque_longueur'])/2)
+        pos_x_in_pix = int(self.plaque_length*x/(float(self.Simu_parameters['plaque_longueur'])))
+        pos_y_in_pix = int(self.plaque_width*(float(self.Simu_parameters['plaque_largeur']) - y)/float(self.Simu_parameters['plaque_largeur']))
+        half_longueur_actu_in_pix = int(self.plaque_length*float(self.Simu_parameters['longueur_actu'])/(float(self.Simu_parameters['plaque_longueur']))/2)
+        half_largeur_actu_in_pix = int(self.plaque_width*float(self.Simu_parameters['largeur_actu'])/(float(self.Simu_parameters['plaque_largeur']))/2)
         self.plaque_canvas.coords(self.Actuateur_shape, pos_x_in_pix - half_longueur_actu_in_pix, pos_y_in_pix - half_largeur_actu_in_pix, pos_x_in_pix + half_longueur_actu_in_pix, pos_y_in_pix + half_largeur_actu_in_pix)
 
     def validate_input(self, P):# Permet seulement les chiffres

@@ -117,8 +117,8 @@ class Plaque:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
 
         # Interpolate pour une plus belle heat map
-        # img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bilinear')
-        img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet')
+        img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bilinear')
+        # img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet')
         cbar = plt.colorbar(img, pad=0.1)
         cbar.set_label('Temperature (°C)')
         ax1.scatter(Interest_point_x_1, Interest_point_y_1, color="blue", s=200, marker='x')
