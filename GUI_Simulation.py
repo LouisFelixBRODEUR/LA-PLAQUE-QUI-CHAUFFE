@@ -36,6 +36,7 @@ class GUI:
         ctk.set_default_color_theme("blue")  # Blue theme for buttons and other elements
 
         # Initialize variables
+        self.save_csv_bool = False
         self.pix_spacing = 20
         self.pix_to_plaque_box = 3
         self.plaque_display_size = 300
@@ -128,13 +129,19 @@ class GUI:
         # label_save_path.grid(row=0, column=0, sticky="w", padx=(5,0))
         
         # -------------------------------------------------       
-        self.CSV_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format CSV dans : {self.Save_as_path}")
+        self.CSV_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format CSV dans : {self.Save_as_path}", command=self.CSV_toggle)
         self.CSV_switch.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(0,5))
+        if self.save_csv_bool:
+            self.CSV_switch.select()
+            
+        # self.CSV_switch.deselect()
         # -------------------------------------------------
         
         # 'Save as' boutton
-        self.csv_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
+        self.csv_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked, state='disabled')
         self.csv_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
+        if self.save_csv_bool:
+            self.csv_path_button.configure(state='normal')
         
 
         # load params from json
@@ -335,7 +342,7 @@ class GUI:
         try:
             # Saving simu in csv
             save_csv = True
-            if not self.CSV_switch.get() or self.Save_as_path == "Aucune Sélection":
+            if not self.CSV_toggle or self.Save_as_path == "Aucune Sélection":
                 save_csv = False
             My_plaque.Launch_Simu(save_csv=save_csv)
         except Exception as e:
@@ -348,7 +355,7 @@ class GUI:
         if New_save_as_path == '':
             New_save_as_path = "Aucune Sélection"
         self.Save_as_path = New_save_as_path
-        self.load_frame(pre_CSV_switch=True)
+        self.load_frame()
 
     def create_rounded_rectangle(self, color):
         """Draw a rectangle with rounded corners."""
@@ -453,6 +460,17 @@ class GUI:
     def Reset_to_default(self):
         self.Simu_parameters = self.Initial_parameters
         self.load_frame()
+        
+    def CSV_toggle(self):
+        print('CSV_toggle')
+        if self.CSV_switch.get():
+            print('activated')
+            self.save_csv_bool = True
+            self.csv_path_button.configure(state="normal")  # Enable button
+        else:
+            print('deactivated')
+            self.save_csv_bool = False
+            self.csv_path_button.configure(state="disabled")  # Disable button
         
 
 if __name__ == "__main__":
