@@ -6,18 +6,12 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO SaveCSVSwitch reset tt le temps
-# TODO perturbation
-# TODO Realtime ajustement?
-# TODO time_step et mm_par_element change beaucoup trop le resultat de la simu Respect de la condition de Courant–Friedrichs–Lewy condition
-# TODO automatiser le set des parametre de sim
-# TODO slider for interest point
-# TODO add mm label to the entries sliders
-# TODO Export data as excel
-# TODO save animation as mp4
-# TODO save interest point data
-# TODO check params de convec thermique et puissance actu to fit avec les tests
+# TODO Actuateur Actual Power
 # TODO refroidissement
+# TODO check params de convec thermique
+# TODO slider for interest point
+# TODO perturbation?
+# TODO Realtime ajustement?
 
 class GUI:
     def __init__(self):
@@ -45,7 +39,7 @@ class GUI:
         self.Simu_parameters = {
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
-            'mm_par_element' : 3, # mm # TODO Automatic set
+            'mm_par_element' : 1, # mm
             'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15, # mm
             'position_largeur_actuateur' : 30, # mm
@@ -57,9 +51,8 @@ class GUI:
             'capacite_thermique_plaque' : 900, # J/Kg*K
             'conductivite_thermique_plaque' : 220, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
-            'time_step' : 0.025, #sec # TODO Automatic set
+            'time_step' : 'auto', #sec
             'simu_duration' : 100, #sec
-            'animation_length' : 100, # frames # TODO Automatic set == simu_duration?
             'point_interet_1_largeur' : 30, # mm # TODO add slider
             'point_interet_1_longueur' : 15, # mm # TODO add slider
             'point_interet_2_largeur' : 30, # mm # TODO add slider
@@ -77,6 +70,11 @@ class GUI:
         sys.exit()
 
     def on_enter_key(self, event=None):
+        if self.length_value.get() == '':
+            self.length_value.insert(0, 0)
+        if self.width_value.get() == '':
+            self.width_value.insert(0,0)
+
         self.Log_parameters()
         self.load_frame()
 
@@ -99,7 +97,6 @@ class GUI:
         self.parameters_correction()
 
     def Test_function(self, event=None):
-        print(self.CSV_switch.get())
         print('Current simulation parameters:')
         for param, value in self.Simu_parameters.items():
             print(f'\t{param} : {value}')
@@ -123,27 +120,16 @@ class GUI:
         save_frame.grid(row=0, column=0, columnspan=2, pady=(self.pix_spacing, self.pix_spacing/2), padx=self.pix_spacing, sticky="ew")
         save_frame.columnconfigure(0, weight=1)
         save_frame.columnconfigure(1, weight=0)
-        # # Save Path Label
-        # text_save_path = f"Données de simulation enregistrées dans : {self.Save_as_path}"
-        # label_save_path = ctk.CTkLabel(save_frame, text=text_save_path)
-        # label_save_path.grid(row=0, column=0, sticky="w", padx=(5,0))
-        
-        # -------------------------------------------------       
+        # 'Save as' boutton
+        self.csv_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
+        self.csv_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
+         
+        # CSV Save switch
         self.CSV_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format CSV dans : {self.Save_as_path}", command=self.CSV_toggle)
         self.CSV_switch.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(0,5))
         if self.save_csv_bool:
             self.CSV_switch.select()
-            
-        # self.CSV_switch.deselect()
-        # -------------------------------------------------
         
-        # 'Save as' boutton
-        self.csv_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked, state='disabled')
-        self.csv_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
-        if self.save_csv_bool:
-            self.csv_path_button.configure(state='normal')
-        
-
         # load params from json
         self.Json_path_button = ctk.CTkButton(save_frame, text="Charger les paramètres à partir d'un .json", command=self.load_simu_params_from_json)
         self.Json_path_button.grid(row=1, column=0, sticky="w", padx=(5,0), pady=(0,5))
@@ -163,12 +149,12 @@ class GUI:
 
         # Label for Temp Ambiante
         Temp_Ambi_label = ctk.CTkLabel(self.plaque_info_frame, text="Température ambiante (°C) : ")
-        Temp_Ambi_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        Temp_Ambi_label.grid(row=row_count2, column=3, sticky="ws", padx=(0,0), pady=(0,0))
         # data Entry for Temp Ambiante 
         self.Temp_ambiante_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
         self.Temp_ambiante_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.Temp_ambiante_user_entry.insert("1", str(self.Simu_parameters['Temperature_Ambiante_C']))
-        self.Temp_ambiante_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        self.Temp_ambiante_user_entry.grid(row=row_count2, column=4, sticky="ws", pady=(0,0))
         row_count2+=1
                 
         # Label for masse_volumique_plaque
@@ -273,7 +259,7 @@ class GUI:
 
         # Code for plaque with sliders:
         # Label
-        PosActu_Label = ctk.CTkLabel(self.plaque_info_frame, text="Position de l'actuateur :")
+        PosActu_Label = ctk.CTkLabel(self.plaque_info_frame, text="Position de l'actuateur (mm) :")
         PosActu_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         row_count += 1
         # Plaque
@@ -290,21 +276,20 @@ class GUI:
         min_max_for_actu_size = math.ceil(self.Simu_parameters['longueur_actu']/ 2)
         self.length_slider = ctk.CTkSlider(self.plaque_info_frame, width=self.plaque_length, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_longueur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="horizontal", button_color="#ff4242")
         self.length_slider.set(float(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
-        self.length_slider.grid(row=row_count, column=0, columnspan=2, pady=(0,5), padx=(10,4), sticky="ew")
+        self.length_slider.grid(row=row_count, column=0, columnspan=2, pady=(0,5), padx=(10,0), sticky="ew")
         # Create corresponding Entry for horizontal slider
-        self.length_value = ctk.CTkEntry(self.plaque_info_frame, width=80, validate="key", validatecommand=(self.validate_cmd, "%P"))
-        self.length_value.grid(row=row_count, column=2, padx=0, pady=(0,5), sticky="w")
+        self.length_value = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
+        self.length_value.grid(row=row_count, column=2, padx=0, pady=(0,0), sticky="w")
         self.length_value.insert(0, str(self.length_slider.get()))  # Set initial value
         self.length_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length"))
         # Create vertical slider for the red square's y position (height)
         min_max_for_actu_size = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
         self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=self.plaque_width, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="vertical", button_color="#ff4242")
-        # print(float(self.Simu_parameters['position_largeur_actuateur']))
         self.width_slider.set(float(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
-        self.width_slider.grid(row=row_count-1, column=2, padx=(35,0), pady=(0,0), sticky="w")
+        self.width_slider.grid(row=row_count-1, column=2, padx=(0,0), pady=(0,0), sticky="ns")
         # Create corresponding Entry for vertical slider
-        self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=80, validate="key", validatecommand=(self.validate_cmd, "%P"))
-        self.width_value.grid(row=row_count - 2, column=2, pady=0, padx=(5,0), sticky="s")
+        self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
+        self.width_value.grid(row=row_count - 2, column=2, pady=(0,0), padx=(0,0), sticky="")
         self.width_value.insert(0, str(self.plaque_length - self.width_slider.get()))  # Set initial value (reverse the initial y position)
         self.width_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width"))
         self.update_actu_red_square()
@@ -340,11 +325,10 @@ class GUI:
         self.root.attributes("-disabled", True)
         My_plaque = Plaque(self.Simu_parameters)
         try:
-            # Saving simu in csv
-            save_csv = True
-            if not self.CSV_toggle or self.Save_as_path == "Aucune Sélection":
-                save_csv = False
-            My_plaque.Launch_Simu(save_csv=save_csv)
+            CSV_save_as_path = self.Save_as_path
+            if not self.CSV_switch.get():
+                CSV_save_as_path = "Aucune Sélection"
+            My_plaque.Launch_Simu(save_csv=CSV_save_as_path)
         except Exception as e:
             plt.close('all')
             print(f"An error occurred during Simulation: {e}")
@@ -462,15 +446,10 @@ class GUI:
         self.load_frame()
         
     def CSV_toggle(self):
-        print('CSV_toggle')
         if self.CSV_switch.get():
-            print('activated')
             self.save_csv_bool = True
-            self.csv_path_button.configure(state="normal")  # Enable button
         else:
-            print('deactivated')
             self.save_csv_bool = False
-            self.csv_path_button.configure(state="disabled")  # Disable button
         
 
 if __name__ == "__main__":
