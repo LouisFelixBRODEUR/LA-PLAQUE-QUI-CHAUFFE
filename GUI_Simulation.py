@@ -6,7 +6,10 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO time_step et mm_par_element change beaucoup trop le resultat de la simu A VOIR
+# TODO SaveCSVSwitch reset tt le temps
+# TODO perturbation
+# TODO Realtime ajustement?
+# TODO time_step et mm_par_element change beaucoup trop le resultat de la simu Respect de la condition de Courant–Friedrichs–Lewy condition
 # TODO automatiser le set des parametre de sim
 # TODO slider for interest point
 # TODO add mm label to the entries sliders
@@ -27,6 +30,7 @@ class GUI:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.validate_cmd = self.root.register(self.validate_input)
         self.validate_cmd_Neg = self.root.register(self.validate_input_Neg)
+        self.root.bind("<Control-q>", self.Test_function)
 
         ctk.set_appearance_mode("dark")  # Dark mode for better contrast
         ctk.set_default_color_theme("blue")  # Blue theme for buttons and other elements
@@ -52,7 +56,7 @@ class GUI:
             'capacite_thermique_plaque' : 900, # J/Kg*K
             'conductivite_thermique_plaque' : 220, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
-            'time_step' : 0.01, #sec # TODO Automatic set
+            'time_step' : 0.025, #sec # TODO Automatic set
             'simu_duration' : 100, #sec
             'animation_length' : 100, # frames # TODO Automatic set == simu_duration?
             'point_interet_1_largeur' : 30, # mm # TODO add slider
@@ -93,12 +97,14 @@ class GUI:
         
         self.parameters_correction()
 
-    def Test_function(self):
-        print(self.Simu_parameters)
+    def Test_function(self, event=None):
+        print(self.CSV_switch.get())
+        print('Current simulation parameters:')
+        for param, value in self.Simu_parameters.items():
+            print(f'\t{param} : {value}')
 
     def load_simu_params_from_json(self):
         json_path = filedialog.askopenfile(title="Sélectionnez un fichier JSON", filetypes=[("JSON files", "*.json")])
-        
         if json_path != None:
             with open(json_path.name, 'r') as file:
                 self.Simu_parameters = json.load(file)
@@ -116,17 +122,24 @@ class GUI:
         save_frame.grid(row=0, column=0, columnspan=2, pady=(self.pix_spacing, self.pix_spacing/2), padx=self.pix_spacing, sticky="ew")
         save_frame.columnconfigure(0, weight=1)
         save_frame.columnconfigure(1, weight=0)
-        # Save Path Label
-        text_save_path = f"Données de simulation enregistrées dans : {self.Save_as_path}"
-        label_save_path = ctk.CTkLabel(save_frame, text=text_save_path)
-        label_save_path.grid(row=0, column=0, sticky="w", padx=(5,0))
+        # # Save Path Label
+        # text_save_path = f"Données de simulation enregistrées dans : {self.Save_as_path}"
+        # label_save_path = ctk.CTkLabel(save_frame, text=text_save_path)
+        # label_save_path.grid(row=0, column=0, sticky="w", padx=(5,0))
+        
+        # -------------------------------------------------       
+        self.CSV_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format CSV dans : {self.Save_as_path}")
+        self.CSV_switch.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(0,5))
+        # -------------------------------------------------
+        
         # 'Save as' boutton
-        self.Select_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
-        self.Select_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
+        self.csv_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
+        self.csv_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
+        
 
         # load params from json
-        self.Select_path_button = ctk.CTkButton(save_frame, text="Charger les paramètres à partir d'un .json", command=self.load_simu_params_from_json)
-        self.Select_path_button.grid(row=1, column=0, sticky="w", padx=(5,0), pady=(0,5))
+        self.Json_path_button = ctk.CTkButton(save_frame, text="Charger les paramètres à partir d'un .json", command=self.load_simu_params_from_json)
+        self.Json_path_button.grid(row=1, column=0, sticky="w", padx=(5,0), pady=(0,5))
 
         # Frame for plaque info
         self.plaque_info_frame = ctk.CTkFrame(self.root)
@@ -320,7 +333,11 @@ class GUI:
         self.root.attributes("-disabled", True)
         My_plaque = Plaque(self.Simu_parameters)
         try:
-            My_plaque.Launch_Simu_mpl_ani()
+            # Saving simu in csv
+            save_csv = True
+            if not self.CSV_switch.get() or self.Save_as_path == "Aucune Sélection":
+                save_csv = False
+            My_plaque.Launch_Simu(save_csv=save_csv)
         except Exception as e:
             plt.close('all')
             print(f"An error occurred during Simulation: {e}")
@@ -331,7 +348,7 @@ class GUI:
         if New_save_as_path == '':
             New_save_as_path = "Aucune Sélection"
         self.Save_as_path = New_save_as_path
-        self.load_frame()
+        self.load_frame(pre_CSV_switch=True)
 
     def create_rounded_rectangle(self, color):
         """Draw a rectangle with rounded corners."""

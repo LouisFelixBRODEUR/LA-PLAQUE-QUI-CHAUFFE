@@ -31,14 +31,16 @@ class Plaque:
         self.Interest_point_largeur_3 = float(Parameters['point_interet_3_largeur'])
         self.Interest_point_longueur_3 = float(Parameters['point_interet_3_longueur'])
 
+        # Convection Q̇ = h•A•ΔT
+        # Conduction Q̇ = κ•A•ΔT/l
         self.Temperature_Ambiante = self.Temperature_Ambiante_C + 273.15 # C
         self.Constante_plaque = self.conductivite_thermique_plaque*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)**2
         self.Constante_Air_top_bot = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.epaisseur_plaque_mm/1000)
         self.Constante_Air_side = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)
 
         print(f'C Plaque {self.Constante_plaque}') 
-        # print(f'C Air bot_top {self.Constante_Air_top_bot}')
-        # print(f'C Air sides {self.Constante_Air_side}')
+        print(f'C Air bot_top {self.Constante_Air_top_bot}')
+        print(f'C Air sides {self.Constante_Air_side}')
 
         # Temp Initial 
         self.Geometry_Matrix = np.full((int(self.plaque_largeur/self.mm_par_element), int(self.plaque_longueur/self.mm_par_element)), float(self.Temperature_Ambiante))
@@ -100,7 +102,7 @@ class Plaque:
             for x in range(pos_x_actu-half_lon, pos_x_actu+half_lon+Top_range_lon):
                 self.Geometry_Matrix[y][x] += delta_temp
         
-    def Launch_Simu_mpl_ani(self, display_animation=True, save_csv = False, save_MP4 = False):
+    def Launch_Simu(self, display_animation=True, save_csv = False, save_MP4 = False):
         simu_start_time = time.time()
         iterations_number = max(1,int(self.simu_duration / self.time_step))
 
@@ -117,8 +119,8 @@ class Plaque:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
 
         # Interpolate pour une plus belle heat map
-        img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bilinear')
-        # img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet')
+        # img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet', interpolation='bilinear')
+        img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet')
         cbar = plt.colorbar(img, pad=0.1)
         cbar.set_label('Temperature (°C)')
         ax1.scatter(Interest_point_x_1, Interest_point_y_1, color="blue", s=200, marker='x')
@@ -163,6 +165,8 @@ class Plaque:
                 self.actuateur_influence()
                 self.iterate()
                 self.iteration_counter += 1
+            if save_csv:
+                print('SAVE in CSV')
             Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
             Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
             Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
