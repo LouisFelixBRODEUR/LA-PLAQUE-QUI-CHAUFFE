@@ -6,12 +6,12 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO Actuateur Actual Power
+# TODO Couple Actuateur
 # TODO refroidissement
 # TODO check params de convec thermique
 # TODO slider for interest point
 # TODO perturbation?
-# TODO Realtime ajustement?
+# TODO Realtime ajustement Simulation
 
 class GUI:
     def __init__(self):
@@ -45,7 +45,7 @@ class GUI:
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm
             'longueur_actu' : 15, # mm
-            'puissance_actuateur' : 6, #W
+            'courant_actuateur' : 2.57, #W
             'masse_volumique_plaque' : 2698, # kg/m3
             'epaisseur_plaque_mm' : 1.5, # mm
             'capacite_thermique_plaque' : 900, # J/Kg*K
@@ -84,7 +84,7 @@ class GUI:
         self.Simu_parameters['plaque_longueur'] = float(self.plaque_length_user_entry.get())
         self.Simu_parameters['position_longueur_actuateur'] = float(self.length_value.get())
         self.Simu_parameters['position_largeur_actuateur'] = float(self.width_value.get())
-        self.Simu_parameters['puissance_actuateur'] = float(self.actu_power_user_entry.get())
+        self.Simu_parameters['courant_actuateur'] = float(self.actu_courant_user_entry.get())
         self.Simu_parameters['largeur_actu'] = float(self.actu_width_user_entry.get())
         self.Simu_parameters['longueur_actu'] = float(self.actu_length_user_entry.get())
         self.Simu_parameters['simu_duration'] = float(self.simu_length_user_entry.get())        
@@ -99,6 +99,9 @@ class GUI:
     def Test_function(self, event=None):
         print('Current simulation parameters:')
         for param, value in self.Simu_parameters.items():
+            print(f'\t{param} : {value}')
+        print('Initial simulation parameters:')
+        for param, value in self.Initial_parameters.items():
             print(f'\t{param} : {value}')
 
     def load_simu_params_from_json(self):
@@ -247,14 +250,14 @@ class GUI:
         self.actu_length_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
-        # Label for Actuateur Power
-        Actu_Power_Label = ctk.CTkLabel(self.plaque_info_frame, text="Puissance de l'actuateur (W) : ")
-        Actu_Power_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
-        # data Entry for Actuateur Power
-        self.actu_power_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
-        self.actu_power_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
-        self.actu_power_user_entry.insert("1", str(self.Simu_parameters['puissance_actuateur']))
-        self.actu_power_user_entry.grid(row=row_count, column=1, sticky="w")
+        # Label for Actuateur Amp
+        Actu_courant_Label = ctk.CTkLabel(self.plaque_info_frame, text="Courant dans l'actuateur (A) : ")
+        Actu_courant_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
+        # data Entry for Actuateur amp
+        self.actu_courant_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
+        self.actu_courant_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.actu_courant_user_entry.insert("1", str(self.Simu_parameters['courant_actuateur']))
+        self.actu_courant_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
         # Code for plaque with sliders:
@@ -380,8 +383,9 @@ class GUI:
         else:
             return False
     def validate_input_Neg(self, P):# Permet seulement le chiffre incluant les negatifs
-        if P[0] == "-":
-            P = P[1:]
+        if P != "":
+            if P[0] == "-":
+                P = P[1:]
         if P == "" or P.isdigit() or (P.replace('.', '', 1).isdigit() and P.count('.') <= 1):
             return True
         else:
@@ -451,7 +455,6 @@ class GUI:
         else:
             self.save_csv_bool = False
         
-
 if __name__ == "__main__":
     app = GUI()
     app.root.mainloop()

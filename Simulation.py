@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import copy
 import matplotlib.animation as animation
 import os
 from datetime import datetime
@@ -18,7 +17,7 @@ class Plaque:
         self.longueur_actu = float(Parameters['longueur_actu']) 
         self.position_longueur_actuateur = float(Parameters['position_longueur_actuateur']) 
         self.position_largeur_actuateur = float(Parameters['position_largeur_actuateur']) 
-        self.puissance_actuateur = float(Parameters['puissance_actuateur'])
+        self.courant_actuateur = float(Parameters['courant_actuateur'])
         self.masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
         self.epaisseur_plaque_mm = float(Parameters['epaisseur_plaque_mm']) 
         self.capacite_thermique_plaque = float(Parameters['capacite_thermique_plaque'])
@@ -79,7 +78,18 @@ class Plaque:
         # Update the temperature matrix
         self.Geometry_Matrix += self.Constante_plaque * delta_T_voisin_plaque + self.Constante_Air_top_bot * delta_T_voisin_air_top_bot + self.Constante_Air_side * delta_T_voisin_air_side
     
+    def Heat_Pumped(self, Th, Delta_T, Courant):
+        a=1.21161+0.02535*Th
+        b=-0.04109-0.00298*Th
+        c=35.223+0.07174*Th
+        d=-7.2969+0.00174*Th
+        e=0.50796-0.000739*Th
+        Power_at_0 = a*Courant+b*Courant**2
+        Delta_T_at_0 = c*Courant+d*Courant**2+e*Courant**3
+        return Power_at_0*(1-Delta_T/Delta_T_at_0)
+    
     def actuateur_influence(self):
+        
         pos_y_actu = max(0,min(len(self.Geometry_Matrix)-1, int(self.position_largeur_actuateur/self.mm_par_element)))
         pos_x_actu = max(0,min(len(self.Geometry_Matrix[0])-1, int(self.position_longueur_actuateur/self.mm_par_element)))
         largeur_actu_in_element = self.largeur_actu/self.mm_par_element
@@ -96,12 +106,20 @@ class Plaque:
         else:
             Top_range_lon = 0
 
-        Chaleur_en_jeu = self.puissance_actuateur*self.time_step
+        y_range = slice(pos_y_actu - half_larg, pos_y_actu + half_larg + Top_range_larg)
+        x_range = slice(pos_x_actu - half_lon, pos_x_actu + half_lon + Top_range_lon)
+
+        # Calcul de la chaleur transmise par l'actuateur
+        Th = np.average(self.Geometry_Matrix[y_range, x_range]) - 273.15
+        Delta_T = Th - self.Temperature_Ambiante + 273.15
+        Chaleur_en_jeu = self.Heat_Pumped(Th, Delta_T, self.courant_actuateur)*self.time_step
+        # print(f'Th : {Th}')
+        # print(f'Delta_T : {Delta_T}')
+        # print(f'Heat Pumped : {Chaleur_en_jeu/self.time_step}W')
+               
         Chaleur_par_element = Chaleur_en_jeu /(largeur_actu_in_element*largeur_actu_in_element)
         delta_temp = Chaleur_par_element / (self.epaisseur_plaque_mm /1000 * (self.mm_par_element/1000)**2 * self.masse_volumique_plaque) / self.capacite_thermique_plaque
                 
-        y_range = slice(pos_y_actu - half_larg, pos_y_actu + half_larg + Top_range_larg)
-        x_range = slice(pos_x_actu - half_lon, pos_x_actu + half_lon + Top_range_lon)
         self.Geometry_Matrix[y_range, x_range] += delta_temp
         
     def Launch_Simu(self, display_animation=True, save_csv = "Aucune Sélection", Debug=False):
