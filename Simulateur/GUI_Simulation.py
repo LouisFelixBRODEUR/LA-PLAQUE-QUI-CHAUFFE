@@ -46,9 +46,9 @@ class GUI:
             'largeur_actu' : 15, # mm
             'longueur_actu' : 15, # mm
             'courant_actuateur' : 2.57, #W
-            'masse_volumique_plaque' : 2698, # kg/m3
-            'epaisseur_plaque_mm' : 1.5, # mm
-            'capacite_thermique_plaque' : 900, # J/Kg*K
+            'masse_volumique_plaque' : 2665, # kg/m3
+            'epaisseur_plaque_mm' : 1.6, # mm
+            'capacite_thermique_plaque' : 888, # J/Kg*K
             'conductivite_thermique_plaque' : 220, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
             'time_step' : 'auto', #sec
