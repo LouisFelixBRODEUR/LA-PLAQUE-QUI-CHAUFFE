@@ -5,68 +5,60 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
-# Transfer Function is 26.1845230099/3866.85744s^2 + 132.59234s + 1
-data_refroidissement_path = os.path.dirname(os.path.abspath(__file__))+"\\Echelon_-0_39V.csv"
-df = pd.read_csv(data_refroidissement_path, encoding="ISO-8859-1")
-column_arrays = {col: df[col].to_numpy() for col in df.columns}
-data_time = column_arrays["Temps (s)"]
-data_time = data_time[:456]
-data_temp1 = column_arrays["Temp 1 (°C)"]
-data_temp2 = column_arrays["Temp 2 (°C)"]
-temp_3_base = np.max(column_arrays["Temp 3 (°C)"])
-data_temp3 = column_arrays["Temp 3 (°C)"]-temp_3_base
-data_temp3 = data_temp3[:456]
-
-
-# # Transfer Function is 46.1591422152/5242.27153s^2 + 172.1295s + 1
-# data_rechaufement_path = os.path.dirname(os.path.abspath(__file__))+"\\Echelon_0_39V.csv"
-# df = pd.read_csv(data_rechaufement_path, encoding="ISO-8859-1")
+# data_refroidissement_path = os.path.dirname(os.path.abspath(__file__))+"\\Echelon_-0_39V.csv"
+# df = pd.read_csv(data_refroidissement_path, encoding="ISO-8859-1")
 # column_arrays = {col: df[col].to_numpy() for col in df.columns}
 # data_time = column_arrays["Temps (s)"]
+# data_time = data_time[:456]
 # data_temp1 = column_arrays["Temp 1 (°C)"]
 # data_temp2 = column_arrays["Temp 2 (°C)"]
-# temp_3_base = np.min(column_arrays["Temp 3 (°C)"])
+# temp_3_base = np.max(column_arrays["Temp 3 (°C)"])
 # data_temp3 = column_arrays["Temp 3 (°C)"]-temp_3_base
+# data_temp3 = data_temp3[:456]
 
+data_rechaufement_path = os.path.dirname(os.path.abspath(__file__))+"\\Echelon_0_39V.csv"
+df = pd.read_csv(data_rechaufement_path, encoding="ISO-8859-1")
+column_arrays = {col: df[col].to_numpy() for col in df.columns}
+data_time = column_arrays["Temps (s)"]
+data_temp1 = column_arrays["Temp 1 (°C)"]
+data_temp2 = column_arrays["Temp 2 (°C)"]
+temp_3_base = np.min(column_arrays["Temp 3 (°C)"])
+data_temp3 = column_arrays["Temp 3 (°C)"]-temp_3_base
+
+
+# # Identification de la fonction de Transfert retard
+# def sys_2iem_ordre_tau1tau2(t, K, tau1, tau2, retard):  # Reponse a lechelon 1 dun systeme du 2ieme ordre
+#     t_shifted = np.maximum(0, t - retard)
+#     return K+(K/(tau2-tau1))*(tau1*np.exp(-t_shifted/tau1)-tau2*np.exp(-t_shifted/tau2))
+# # Fiting de la reponse experimentale
+# bounds = ([-50, 10, 10, 0], [50, 500, 500, 50])
+# initial_guess = [0, 100, 75, 20]
+# params, covariance = curve_fit(sys_2iem_ordre_tau1tau2, data_time, data_temp3, p0=initial_guess, bounds=bounds)
+# K_val = params[0]/-0.39
+# a = params[1]*params[2]
+# b = params[1]+params[2]
+# print(f'Transfer Function is {round(K_val,10)}/{round(a,5)}s^2 + {round(b,5)}s + 1 * exp(-s{round(params[3],5)}')
+# # print(params[0])
+# # print(params[1])
+# # print(params[2])
+# # print(params[3])
+# fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, params[0], params[1], params[2], params[3])
 
 # Identification de la fonction de Transfert
-<<<<<<< HEAD:Identification_Fonction_Transfert/Ident_fct_transfert.py
-# def sys_2iem_ordre(t, K, A, B): # Reponse a lechelon 1 dun systeme du 2ieme ordre
-#     Ptau2 = (B+np.sqrt(B**2-4*A))/2
-#     Mtau2 = (B-np.sqrt(B**2-4*A))/2
-#     tau2 = Ptau2
-#     tau1 = A/tau2
-#     return sys_2iem_ordre_tau1tau2(t, K, tau1, tau2)
-def sys_2iem_ordre_tau1tau2(t, K, tau1, tau2, retard):  # Reponse a lechelon 1 dun systeme du 2ieme ordre
-    t_shifted = np.maximum(0, t - retard)
-    return K+(K/(tau2-tau1))*(tau1*np.exp(-t_shifted/tau1)-tau2*np.exp(-t_shifted/tau2))
-# Fiting de la reponse experimentale
-bounds = ([-50, 10, 10, 0], [50, 500, 500, 50])
-initial_guess = [0, 100, 75, 20]
-=======
 def sys_2iem_ordre_tau1tau2(t, K, tau1, tau2):  # Reponse a lechelon 1 dun systeme du 2ieme ordre
     return K+(K/(tau2-tau1))*(tau1*np.exp(-t/tau1)-tau2*np.exp(-t/tau2))
 # Fiting de la reponse experimentale
 bounds = ([-50, 10, 10], [50, 500, 500])
 initial_guess = [0, 100, 75]
->>>>>>> 9362caa79fb226804d5abac9acb0c331aea13193:Identification_Fonction_Transfert/Identification_FT.py
 params, covariance = curve_fit(sys_2iem_ordre_tau1tau2, data_time, data_temp3, p0=initial_guess, bounds=bounds)
-K_val = params[0]/-0.39
+K_val = params[0]/0.39
 a = params[1]*params[2]
 b = params[1]+params[2]
-print(f'Transfer Function is {round(K_val,10)}/{round(a,5)}s^2 + {round(b,5)}s + 1 * exp(-s{round(params[3],5)}')
-
-print(params[0])
-print(params[1])
-print(params[2])
-print(params[3])
-
-<<<<<<< HEAD:Identification_Fonction_Transfert/Ident_fct_transfert.py
-fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, params[0], params[1], params[2], params[3])
-# fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, 17, 100, 75)
-=======
+print(f'Transfer Function is {round(K_val,10)}/{round(a,5)}s^2 + {round(b,5)}s + 1')
+# print(params[0])
+# print(params[1])
+# print(params[2])
 fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, params[0], params[1], params[2])
->>>>>>> 9362caa79fb226804d5abac9acb0c331aea13193:Identification_Fonction_Transfert/Identification_FT.py
 
 
 plt.figure(figsize=(10, 5))
@@ -82,13 +74,16 @@ plt.title("Temperature Variation Over Time")
 plt.legend()
 plt.grid(True)
 
+# transfer_function_text = (
+#     fr"$G(s) = \frac{{{round(K_val, 2)}}}{{{round(a, 2)}s^2 + {round(b, 2)}s + 1}} e^{{-s{round(params[3], 2)}}}$"
+# )
 transfer_function_text = (
-    fr"$G(s) = \frac{{{round(K_val, 2)}}}{{{round(a, 2)}s^2 + {round(b, 2)}s + 1}} e^{{-s{round(params[3], 2)}}}$"
+    fr"$G(s) = \frac{{{round(K_val, 2)}}}{{{round(a, 2)}s^2 + {round(b, 2)}s + 1}}$"
 )
 
 plt.text(
-    0.00 * max(data_time),  # X position (5% from the left)
-    0.9 * max(data_temp3),  # Y position (90% of max temp)
+    0.4 * max(data_time),  # X position (5% from the left)
+    0.5 * max(np.abs(data_temp3)),  # Y position (90% of max temp)
     transfer_function_text,
     fontsize=18,
     bbox=dict(facecolor='white', alpha=0.7)  # Background box for readability
