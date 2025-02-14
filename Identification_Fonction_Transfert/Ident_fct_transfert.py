@@ -34,22 +34,24 @@ data_temp3 = column_arrays["Temp 3 (°C)"]-temp_3_base
 #     tau2 = Ptau2
 #     tau1 = A/tau2
 #     return sys_2iem_ordre_tau1tau2(t, K, tau1, tau2)
-def sys_2iem_ordre_tau1tau2(t, K, tau1, tau2):  # Reponse a lechelon 1 dun systeme du 2ieme ordre
-    return K+(K/(tau2-tau1))*(tau1*np.exp(-t/tau1)-tau2*np.exp(-t/tau2))
+def sys_2iem_ordre_tau1tau2(t, K, tau1, tau2, retard):  # Reponse a lechelon 1 dun systeme du 2ieme ordre
+    t_shifted = np.maximum(0, t - retard)
+    return K+(K/(tau2-tau1))*(tau1*np.exp(-t_shifted/tau1)-tau2*np.exp(-t_shifted/tau2))
 # Fiting de la reponse experimentale
-bounds = ([-50, 10, 10], [1, 500, 500])
-initial_guess = [0, 100, 75]
+bounds = ([-50, 10, 10, 0], [50, 500, 500, 50])
+initial_guess = [0, 100, 75, 20]
 params, covariance = curve_fit(sys_2iem_ordre_tau1tau2, data_time, data_temp3, p0=initial_guess, bounds=bounds)
 K_val = params[0]+temp_3_base
 a = params[1]*params[2]
 b = params[1]+params[2]
-print(f'Transfer Function is {round(K_val,10)}/{round(a,5)}s^2 + {round(b,5)}s + 1')
+print(f'Transfer Function is {round(K_val,10)}/{round(a,5)}s^2 + {round(b,5)}s + 1 * exp(-s{round(params[3],5)}')
 
 print(params[0])
 print(params[1])
 print(params[2])
+print(params[3])
 
-fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, params[0], params[1], params[2])
+fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, params[0], params[1], params[2], params[3])
 # fitted_response_temp3 = sys_2iem_ordre_tau1tau2(data_time, 17, 100, 75)
 
 
@@ -66,5 +68,18 @@ plt.ylabel("Temperature (°C)")
 plt.title("Temperature Variation Over Time")
 plt.legend()
 plt.grid(True)
+
+transfer_function_text = (
+    fr"$G(s) = \frac{{{round(K_val, 2)}}}{{{round(a, 2)}s^2 + {round(b, 2)}s + 1}} e^{{-s{round(params[3], 2)}}}$"
+)
+
+plt.text(
+    0.00 * max(data_time),  # X position (5% from the left)
+    0.9 * max(data_temp3),  # Y position (90% of max temp)
+    transfer_function_text,
+    fontsize=18,
+    bbox=dict(facecolor='white', alpha=0.7)  # Background box for readability
+)
+
 plt.show()
 
