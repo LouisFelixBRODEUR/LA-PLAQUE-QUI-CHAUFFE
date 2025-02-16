@@ -21,8 +21,11 @@ class Plaque:
         self.couple_actuateur = float(Parameters['couple_actuateur'])
         self.convection_actuateur = float(Parameters['convection_actuateur'])
         self.masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
-        self.epaisseur_plaque_mm = float(Parameters['epaisseur_plaque_mm']) 
+        self.masse_volumique_actu = float(Parameters['masse_volumique_actu'])
+        self.epaisseur_plaque_mm = float(Parameters['epaisseur_plaque_mm'])
+        self.epaisseur_actu_mm = float(Parameters['epaisseur_actu_mm'])
         self.capacite_thermique_plaque = float(Parameters['capacite_thermique_plaque'])
+        self.capacite_thermique_Actu = float(Parameters['capacite_thermique_Actu'])
         self.conductivite_thermique_plaque = float(Parameters['conductivite_thermique_plaque'])
         self.coefficient_convection = float(Parameters['coefficient_convection']) 
         self.simu_duration = float(Parameters['simu_duration'])
@@ -45,8 +48,11 @@ class Plaque:
         self.Constante_Air_top_bot = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.epaisseur_plaque_mm/1000)
         self.Constante_Air_side = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)
 
-        self.Constante_Air_top_bot_Actu = self.convection_actuateur*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.epaisseur_plaque_mm/1000)
-        self.Constante_Air_side_Actu = self.convection_actuateur*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)
+        self.capacite_thermique_Actu
+        self.masse_volumique_actu
+        
+        self.Constante_Air_top_bot_Actu = self.convection_actuateur*self.time_step/self.masse_volumique_actu/self.capacite_thermique_Actu/(self.epaisseur_actu_mm/1000)
+        self.Constante_Air_side_Actu = self.convection_actuateur*self.time_step/self.masse_volumique_actu/self.capacite_thermique_Actu/(self.mm_par_element/1000)
         
         # print(f'C Plaque {self.Constante_plaque}') 
         # print(f'C Air bot_top {self.Constante_Air_top_bot}')
@@ -151,9 +157,9 @@ class Plaque:
 
         Th_C = Th-273.15
         if self.Cooling:
-            Chaleur_en_jeu = -self.Heat_Pumped(Th_C, Delta_T, -self.courant_actuateur)*self.time_step
+            Chaleur_en_jeu = -self.Heat_Pumped(Th_C, Delta_T, -self.courant_actuateur)*self.time_step*self.couple_actuateur
         else:
-            Chaleur_en_jeu = self.Heat_Pumped(Th_C, Delta_T, self.courant_actuateur)*self.time_step
+            Chaleur_en_jeu = self.Heat_Pumped(Th_C, Delta_T, self.courant_actuateur)*self.time_step*self.couple_actuateur
 
         # print(f'Th : {Th}')
         # print(f'Delta_T : {Delta_T}')

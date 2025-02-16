@@ -48,9 +48,12 @@ class GUI:
             'courant_actuateur' : 2.57, # W
             'couple_actuateur' : 1, # NA
             'convection_actuateur' : 1, # W/m2*K
-            'masse_volumique_plaque' : 2665, # kg/m3
+            'masse_volumique_plaque' : 2700, # kg/m3
+            'masse_volumique_actu' : 3950, # kg/m3
             'epaisseur_plaque_mm' : 1.6, # mm
-            'capacite_thermique_plaque' : 888, # J/Kg*K
+            'epaisseur_actu_mm' : 0.05, # mm
+            'capacite_thermique_plaque' : 900, # J/Kg*K
+            'capacite_thermique_Actu' : 760, # J/Kg*K
             'conductivite_thermique_plaque' : 220, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
             'time_step' : 'auto', #sec
