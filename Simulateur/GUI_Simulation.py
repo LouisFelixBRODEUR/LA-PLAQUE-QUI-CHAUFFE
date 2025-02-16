@@ -45,7 +45,9 @@ class GUI:
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm
             'longueur_actu' : 15, # mm
-            'courant_actuateur' : 2.57, #W
+            'courant_actuateur' : 2.57, # W
+            'couple_actuateur' : 1, # NA
+            'convection_actuateur' : 1, # W/m2*K
             'masse_volumique_plaque' : 2665, # kg/m3
             'epaisseur_plaque_mm' : 1.6, # mm
             'capacite_thermique_plaque' : 888, # J/Kg*K
