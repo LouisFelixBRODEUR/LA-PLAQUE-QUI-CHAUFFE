@@ -6,12 +6,10 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO Couple Actuateur
-# TODO refroidissement
-# TODO check params de convec thermique
+# TODO save Json parameters
 # TODO slider for interest point
 # TODO perturbation?
-# TODO Realtime ajustement Simulation
+# TODO Realtime ajustement Simulation?
 
 class GUI:
     def __init__(self):
@@ -119,6 +117,22 @@ class GUI:
         else:
             print('No json. Selected')
 
+    def save_simu_params_in_json(self):
+        if self.length_value.get() == '':
+            self.length_value.insert(0, 0)
+        if self.width_value.get() == '':
+            self.width_value.insert(0,0)
+        self.Log_parameters()
+        save_json_path = filedialog.asksaveasfilename(title="Enregistrer json sous")
+        if save_json_path == '':
+            print('No File Selected')
+            return
+        if not(save_json_path[-5:].lower() == '.json'):
+            save_json_path+='.json'
+        with open(save_json_path, 'w') as file:
+            json.dump(self.Simu_parameters, file, indent=4)
+        print(f'Simulation Parameters saved in : {save_json_path}')
+
     def load_frame(self):
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -141,6 +155,10 @@ class GUI:
         # load params from json
         self.Json_path_button = ctk.CTkButton(save_frame, text="Charger les paramètres à partir d'un .json", command=self.load_simu_params_from_json)
         self.Json_path_button.grid(row=1, column=0, sticky="w", padx=(5,0), pady=(0,5))
+
+        # save params in json
+        self.Json_path_button = ctk.CTkButton(save_frame, text="Sauver les paramètres dans un .json", command=self.save_simu_params_in_json)
+        self.Json_path_button.grid(row=2, column=0, sticky="w", padx=(5,0), pady=(0,5))
 
         # Frame for plaque info
         self.plaque_info_frame = ctk.CTkFrame(self.root)
