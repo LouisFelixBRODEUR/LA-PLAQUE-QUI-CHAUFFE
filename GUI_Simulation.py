@@ -6,7 +6,7 @@ import sys
 import json
 import matplotlib.pyplot as plt
 
-# TODO save Json parameters
+# TODO autocalibration avec echelon et essai de lache
 # TODO slider for interest point
 # TODO perturbation?
 # TODO Realtime ajustement Simulation?
