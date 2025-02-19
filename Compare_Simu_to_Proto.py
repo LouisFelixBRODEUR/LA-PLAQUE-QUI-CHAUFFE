@@ -34,12 +34,10 @@ if mode == 'chaud':
 if mode == 'chaud':
     couple_actuateur = 1.8
     convection_actuateur = 40
-    conductivite_thermique_plaque = 110
     coefficient_convection = 9
 if mode == 'froid':
     couple_actuateur = 1.7
     convection_actuateur = 13
-    conductivite_thermique_plaque = 110
     coefficient_convection = 11.5
 
 My_params = {
@@ -60,7 +58,7 @@ My_params = {
     'epaisseur_actu_mm' : 0.05, # mm
     'capacite_thermique_plaque' : 900, # J/Kg*K
     'capacite_thermique_Actu' : 760, # J/Kg*K
-    'conductivite_thermique_plaque' : conductivite_thermique_plaque, # W/m*K #TODO ADJUST
+    'conductivite_thermique_plaque' : 110, # W/m*K #TODO ADJUST
     'coefficient_convection' : coefficient_convection, # W/m2*K #TODO ADJUST
     'time_step' : 'auto', #sec
     'simu_duration' : simu_duration, #sec

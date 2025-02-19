@@ -52,7 +52,7 @@ class GUI:
             'epaisseur_actu_mm' : 0.05, # mm
             'capacite_thermique_plaque' : 900, # J/Kg*K
             'capacite_thermique_Actu' : 760, # J/Kg*K
-            'conductivite_thermique_plaque' : 220, # W/m*K
+            'conductivite_thermique_plaque' : 110, # W/m*K
             'coefficient_convection' : 22, # W/m2*K
             'time_step' : 'auto', #sec
             'simu_duration' : 100, #sec
