@@ -120,8 +120,8 @@ class Plaque:
         Delta_T_at_0 = c*Courant+d*Courant**2+e*Courant**3
         Power = Power_at_0*(1-Delta_T/Delta_T_at_0)
         self.count_power_queue =  self.count_power_queue+1
-        if self.count_power_queue % 1000 == 0:
-            print(f'{Power} W pumped by actuator' )
+        # if self.count_power_queue % 1000 == 0:
+        #     print(f'{Power} W pumped by actuator' )
         return Power
     
     def actuateur_influence(self):

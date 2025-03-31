@@ -9,7 +9,20 @@ import matplotlib.pyplot as plt
 # TODO autocalibration avec echelon et essai de lache
 # TODO slider for interest point
 # TODO perturbation?
-# TODO Realtime ajustement Simulation?
+# TODO Realtime ajustement Simulation
+# TODO .txt, pas .csv
+# TODO manuel de l'utilisateur
+# TODO présence d'un Chrono
+# TODO Les paramètres suivants doivent être dans l’interface:
+'''
+- Dimensions plaque
+- Spécifications du métal (cp, r)
+- Coefficient de conduction
+- Coefficient de convection
+- Couplage thermique entre lactuateur et la plaque
+'''
+# TODO Au moins 10 autres paramètres: mm/element, ...
+
 
 class GUI:
     def __init__(self):
@@ -56,12 +69,12 @@ class GUI:
             'coefficient_convection' : 22, # W/m2*K
             'time_step' : 'auto', #sec
             'simu_duration' : 100, #sec
-            'point_interet_1_largeur' : 30, # mm # TODO add slider
-            'point_interet_1_longueur' : 15, # mm # TODO add slider
-            'point_interet_2_largeur' : 30, # mm # TODO add slider
-            'point_interet_2_longueur' : 60, # mm # TODO add slider
-            'point_interet_3_largeur' : 30, # mm # TODO add slider
-            'point_interet_3_longueur' : 105, # mm # TODO add slider
+            'point_interet_1_largeur' : 30, # mm
+            'point_interet_1_longueur' : 15, # mm
+            'point_interet_2_largeur' : 30, # mm
+            'point_interet_2_longueur' : 60, # mm
+            'point_interet_3_largeur' : 30, # mm
+            'point_interet_3_longueur' : 105, # mm
         }
         self.Initial_parameters = self.Simu_parameters.copy()
 
