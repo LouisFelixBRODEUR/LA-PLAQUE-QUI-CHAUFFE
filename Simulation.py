@@ -179,7 +179,7 @@ class Plaque:
         delta_T_voisin_air_side[-1, :] += self.Temperature_Ambiante - self.Geometry_Actu[-1, :]
         self.Geometry_Actu += self.Constante_Air_top_bot_Actu * delta_T_voisin_air_top_bot + self.Constante_Air_side_Actu * delta_T_voisin_air_side - delta_temp
         
-    def Launch_Simu(self, display_animation=True, save_csv = "Aucune Sélection", Debug=False):
+    def Launch_Simu(self, display_animation=True, save_txt = "Aucune Sélection", Debug=False):
         self.count_power_queue = 0
         simu_start_time = time.time()
         dt_object = datetime.fromtimestamp(simu_start_time)
@@ -260,8 +260,8 @@ class Plaque:
                 self.actuateur_influence()
                 self.iterate()
                 self.iteration_counter += 1
-            if save_csv != "Aucune Sélection": #Sauve a chaque secondes de simu
-                output_dir = save_csv
+            if save_txt != "Aucune Sélection": #Sauve a chaque secondes de simu
+                output_dir = save_txt
                 os.makedirs(output_dir, exist_ok=True)
                 df = pd.DataFrame(self.Geometry_Matrix)
                 time_in_simulation = self.iteration_counter * self.time_step

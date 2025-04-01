@@ -5,12 +5,11 @@ import math
 import sys
 import json
 import matplotlib.pyplot as plt
+import copy
+import numpy
 
-# TODO autocalibration avec echelon et essai de lache
-# TODO slider for interest point
-# TODO perturbation?
-# TODO Realtime ajustement Simulation
-# TODO .txt, pas .csv
+# TODO Parfois reinitialilser params ne fonctionne pas
+# TODO .txt, pas .csv (What un txt cest un csv
 # TODO manuel de l'utilisateur
 # TODO présence d'un Chrono
 # TODO Les paramètres suivants doivent être dans l’interface:
@@ -41,7 +40,7 @@ class GUI:
         ctk.set_default_color_theme("blue")  # Blue theme for buttons and other elements
 
         # Initialize variables
-        self.save_csv_bool = False
+        self.save_txt_bool = False
         self.pix_spacing = 20
         self.pix_to_plaque_box = 3
         self.plaque_display_size = 300
@@ -76,7 +75,14 @@ class GUI:
             'point_interet_3_largeur' : 30, # mm
             'point_interet_3_longueur' : 105, # mm
         }
-        self.Initial_parameters = self.Simu_parameters.copy()
+        # self.Initial_parameters = self.Simu_parameters.copy()
+        self.Initial_parameters = copy.deepcopy(self.Simu_parameters)
+        # self.Initial_parameters = json.loads(json.dumps(self.Simu_parameters))
+        # self.Initial_parameters = {key: copy.deepcopy(value) for key, value in self.Simu_parameters.items()}
+        # for key in self.Initial_parameters:
+        #     print(f"ID of {key} in Simu_parameters: {id(self.Simu_parameters[key])}")
+        #     print(f"ID of {key} in Initial_parameters: {id(self.Initial_parameters[key])}")
+        
 
         self.load_frame() # Load initial frame
 
@@ -125,7 +131,8 @@ class GUI:
         if json_path != None:
             with open(json_path.name, 'r') as file:
                 self.Simu_parameters = json.load(file)
-            self.Initial_parameters = self.Simu_parameters.copy()
+            # self.Initial_parameters = self.Simu_parameters.copy()
+            self.Initial_parameters = copy.deepcopy(self.Simu_parameters)
             self.load_frame()
         else:
             print('No json. Selected')
@@ -156,14 +163,14 @@ class GUI:
         save_frame.columnconfigure(0, weight=1)
         save_frame.columnconfigure(1, weight=0)
         # 'Save as' boutton
-        self.csv_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
-        self.csv_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
+        self.txt_path_button = ctk.CTkButton(save_frame, text="Enregistrer sous", command=self.Save_as_clicked)
+        self.txt_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
          
-        # CSV Save switch
-        self.CSV_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format CSV dans : {self.Save_as_path}", command=self.CSV_toggle)
-        self.CSV_switch.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(0,5))
-        if self.save_csv_bool:
-            self.CSV_switch.select()
+        # TXT Save switch
+        self.TXT_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format .txt dans : {self.Save_as_path}", command=self.TXT_toggle)
+        self.TXT_switch.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(0,5))
+        if self.save_txt_bool:
+            self.TXT_switch.select()        
         
         # load params from json
         self.Json_path_button = ctk.CTkButton(save_frame, text="Charger les paramètres à partir d'un .json", command=self.load_simu_params_from_json)
@@ -364,10 +371,10 @@ class GUI:
         self.root.attributes("-disabled", True)
         My_plaque = Plaque(self.Simu_parameters)
         try:
-            CSV_save_as_path = self.Save_as_path
-            if not self.CSV_switch.get():
-                CSV_save_as_path = "Aucune Sélection"
-            My_plaque.Launch_Simu(save_csv=CSV_save_as_path)
+            TXT_save_as_path = self.Save_as_path
+            if not self.TXT_switch.get():
+                TXT_save_as_path = "Aucune Sélection"
+            My_plaque.Launch_Simu(save_txt=TXT_save_as_path)
         except Exception as e:
             plt.close('all')
             print(f"An error occurred during Simulation: {e}")
@@ -485,11 +492,11 @@ class GUI:
         self.Simu_parameters = self.Initial_parameters
         self.load_frame()
         
-    def CSV_toggle(self):
-        if self.CSV_switch.get():
-            self.save_csv_bool = True
+    def TXT_toggle(self):
+        if self.TXT_switch.get():
+            self.save_txt_bool = True
         else:
-            self.save_csv_bool = False
+            self.save_txt_bool = False
         
 if __name__ == "__main__":
     app = GUI()
