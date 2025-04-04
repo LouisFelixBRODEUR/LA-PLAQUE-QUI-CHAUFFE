@@ -9,15 +9,14 @@ import copy
 import numpy
 import tempfile
 
-# TODO Perturbation slider+show position
 # TODO faire en sorte que le csv exporter est plus clean (colone du temp en premier, mieu explique ce quon exporte)
-# TODO Présence d'un chrono en print()
-# TODO Les paramètres suivants doivent être dans l’interface:
-# TODO Chronometre
-# TODO light indicator for actu start stop
+# TODO Au moins 10 autres paramètres defuck
+# TODO position thermistance
+# TODO Perturbation largeur
+# TODO Chronometre ??en print()??
+# TODO Vitesse de jouage de la simulation
 # TODO tout faire les print en francais
-# TODO Au moins 10 autres paramètres
-# TODO Test variables dentre qui ne bug pas pour infini -infini et zero
+# TODO Test variables dentre qui ne bug pas pour infini -infini et zero -> Cap sur certaine valeur
 # TODO manuel de l'utilisateur
 # TODO clean Comments
 
@@ -66,9 +65,11 @@ class GUI:
             'conductivite_thermique_plaque' : 110, # W/m*K
             'coefficient_convection' : 8, # W/m2*K
             'time_step' : 'auto', #sec
-            'simu_duration' : 200, #sec #BASE 500
+            'simu_duration' : 200, #sec
             'actu_start' : 10, # sec
             'actu_stop' : 150, # sec
+
+
             'point_interet_1_largeur' : 30, # mm
             'point_interet_1_longueur' : 15, # mm
             'point_interet_2_largeur' : 30, # mm
@@ -76,11 +77,12 @@ class GUI:
             'point_interet_3_largeur' : 30, # mm
             'point_interet_3_longueur' : 105, # mm
 
-            'perturbation_longueur' : 100, # mm
-            'perturbation_largeur' : 30, # mm
+
+            'perturbation_longueur' : 60, # mm
+            'perturbation_largeur' : 18, # mm
             'perturabtion_start' : 50, #sec
             'perturabtion_stop' : 75, #sec
-            'perturbation_power' : 1 #W
+            'perturbation_power' : 5 #W
         }
 
         with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".json") as temp_file:
@@ -96,10 +98,14 @@ class GUI:
         sys.exit()
 
     def on_enter_key(self, event=None):
-        if self.length_value.get() == '':
-            self.length_value.insert(0, 0)
-        if self.width_value.get() == '':
-            self.width_value.insert(0,0)
+        if self.length_value_actu.get() == '':
+            self.length_value_actu.insert(0, 0)
+        if self.width_value_actu.get() == '':
+            self.width_value_actu.insert(0,0)
+        if self.length_value_pertu.get() == '':
+            self.length_value_pertu.insert(0, 0)
+        if self.width_value_pertu.get() == '':
+            self.width_value_pertu.insert(0,0)
 
         self.Log_parameters()
         self.load_frame()
@@ -108,8 +114,10 @@ class GUI:
         self.Simu_parameters['Temperature_Ambiante_C'] = float(self.Temp_ambiante_user_entry.get())
         self.Simu_parameters['plaque_largeur'] = float(self.plaque_width_user_entry.get())
         self.Simu_parameters['plaque_longueur'] = float(self.plaque_length_user_entry.get())
-        self.Simu_parameters['position_longueur_actuateur'] = float(self.length_value.get())
-        self.Simu_parameters['position_largeur_actuateur'] = float(self.width_value.get())
+        self.Simu_parameters['position_longueur_actuateur'] = float(self.length_value_actu.get())
+        self.Simu_parameters['position_largeur_actuateur'] = float(self.width_value_actu.get())
+        self.Simu_parameters['perturbation_longueur'] = float(self.length_value_pertu.get())
+        self.Simu_parameters['perturbation_largeur'] = float(self.width_value_pertu.get())
         self.Simu_parameters['puissance_actuateur'] = float(self.actu_puissance_user_entry.get())
         self.Simu_parameters['largeur_actu'] = float(self.actu_width_user_entry.get())
         self.Simu_parameters['longueur_actu'] = float(self.actu_length_user_entry.get())
@@ -150,10 +158,14 @@ class GUI:
             print('No json. Selected')
 
     def save_simu_params_in_json(self):
-        if self.length_value.get() == '':
-            self.length_value.insert(0, 0)
-        if self.width_value.get() == '':
-            self.width_value.insert(0,0)
+        if self.length_value_actu.get() == '':
+            self.length_value_actu.insert(0, 0)
+        if self.width_value_actu.get() == '':
+            self.width_value_actu.insert(0,0)
+        if self.length_value_pertu.get() == '':
+            self.length_value_pertu.insert(0, 0)
+        if self.width_value_pertu.get() == '':
+            self.width_value_pertu.insert(0,0)
         self.Log_parameters()
         save_json_path = filedialog.asksaveasfilename(title="Enregistrer json sous")
         if save_json_path == '':
@@ -285,7 +297,6 @@ class GUI:
         self.plaque_width_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
-        
         # Label for plaque length
         plaque_length = ctk.CTkLabel(self.plaque_info_frame, text="Longueur de la plaque (mm) : ")
         plaque_length.grid(row=row_count, column=0, sticky="w", padx=(5,0))
@@ -326,11 +337,13 @@ class GUI:
         self.actu_puissance_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
+        row_count = max(row_count, row_count2)
         # Code for plaque with sliders:
         # Label
         PosActu_Label = ctk.CTkLabel(self.plaque_info_frame, text="Position de l'actuateur (mm) :")
         PosActu_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         row_count += 1
+
         # Plaque
         self.plaque_width = min(self.plaque_display_size, int(self.plaque_display_size*float(self.Simu_parameters['plaque_largeur'])/float(self.Simu_parameters['plaque_longueur'])))
         self.plaque_length = min(self.plaque_display_size, int(self.plaque_display_size*float(self.Simu_parameters['plaque_longueur'])/float(self.Simu_parameters['plaque_largeur'])))
@@ -340,29 +353,63 @@ class GUI:
         self.plaque_canvas.pack()
         self.create_rounded_rectangle('gray10')# Black background for actuateur red square
         self.Actuateur_shape = self.plaque_canvas.create_rectangle(10, 10, 20, 20, fill="#ff4242", outline="#ff4242")# Red Square For actuateur
+        self.Perturbation_shape = self.plaque_canvas.create_oval(14, 14, 14, 14, fill="#1DBC60", outline="#1DBC60")  # Green Circle for actuateur
         row_count += 1
-        # Create horizontal slider for the red square's x position (width)
+
+        # Create horizontal slider for actuateur x position (width)
         min_max_for_actu_size = math.ceil(self.Simu_parameters['longueur_actu']/ 2)
-        self.length_slider = ctk.CTkSlider(self.plaque_info_frame, width=self.plaque_length, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_longueur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="horizontal", button_color="#ff4242")
-        self.length_slider.set(float(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
-        self.length_slider.grid(row=row_count, column=0, columnspan=2, pady=(0,5), padx=(10,0), sticky="ew")
-        # Create corresponding Entry for horizontal slider
-        self.length_value = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.length_value.grid(row=row_count, column=2, padx=0, pady=(0,0), sticky="w")
-        self.length_value.insert(0, str(self.length_slider.get()))  # Set initial value
-        self.length_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length"))
-        # Create vertical slider for the red square's y position (height)
+        self.length_slider_actu = ctk.CTkSlider(self.plaque_info_frame, width=self.plaque_length, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_longueur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="horizontal", button_color="#ff4242")
+        self.length_slider_actu.set(float(self.Simu_parameters['position_longueur_actuateur']))  # Set initial x position to the middle
+        self.length_slider_actu.grid(row=row_count, column=0, columnspan=2, pady=(0,5), padx=(10,0), sticky="ew")
+        # Create corresponding Entry for  actuateur x position horizontal slider
+        self.length_value_actu = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
+        self.length_value_actu.grid(row=row_count, column=2, padx=0, pady=(0,0), sticky="w")
+        self.length_value_actu.insert(0, str(self.length_slider_actu.get()))  # Set initial value
+        self.length_value_actu.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length_actu"))
+
+        # Create vertical slider for the actuateur's y position (height)
         min_max_for_actu_size = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
-        self.width_slider = ctk.CTkSlider(self.plaque_info_frame, height=self.plaque_width, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="vertical", button_color="#ff4242")
-        self.width_slider.set(float(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
-        self.width_slider.grid(row=row_count-1, column=2, padx=(0,0), pady=(0,0), sticky="ns")
-        # Create corresponding Entry for vertical slider
-        self.width_value = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.width_value.grid(row=row_count - 2, column=2, pady=(0,0), padx=(0,0), sticky="")
-        self.width_value.insert(0, str(self.plaque_length - self.width_slider.get()))  # Set initial value (reverse the initial y position)
-        self.width_value.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width"))
+        self.width_slider_actu = ctk.CTkSlider(self.plaque_info_frame, height=self.plaque_width, from_=min_max_for_actu_size, to=int(float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size), number_of_steps=100, command=self.update_actu_red_square, orientation="vertical", button_color="#ff4242")
+        self.width_slider_actu.set(float(self.Simu_parameters['position_largeur_actuateur']))  # Set initial y position to the middle
+        self.width_slider_actu.grid(row=row_count-1, column=2, padx=(0,0), pady=(0,0), sticky="ns")
+        # Create corresponding Entry for actuateur's y position vertical slider
+        self.width_value_actu = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
+        self.width_value_actu.grid(row=row_count - 2, column=2, pady=(0,0), padx=(0,0), sticky="")
+        self.width_value_actu.insert(0, str(self.plaque_length - self.width_slider_actu.get()))  # Set initial value (reverse the initial y position)
+        self.width_value_actu.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width_actu"))
         self.update_actu_red_square()
         row_count+=1
+
+
+
+
+
+        # Create horizontal slider for perturbation x position (width)
+        self.length_slider_pertu = ctk.CTkSlider(self.plaque_info_frame, width=self.plaque_length, from_=0, to=int(float(self.Simu_parameters['plaque_longueur'])), number_of_steps=100, command=self.update_pertu_green_circle, orientation="horizontal", button_color="#1DBC60")
+        self.length_slider_pertu.set(float(self.Simu_parameters['perturbation_longueur']))  # Set initial x position to the middle
+        self.length_slider_pertu.grid(row=row_count, column=0, columnspan=2, pady=(0,5), padx=(10,0), sticky="ew")
+        # Create corresponding Entry for perturbation x position horizontal slider
+        self.length_value_pertu = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
+        self.length_value_pertu.grid(row=row_count, column=2, padx=0, pady=(0,0), sticky="w")
+        self.length_value_pertu.insert(0, str(self.length_slider_pertu.get()))  # Set initial value
+        self.length_value_pertu.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("length_pertu"))
+
+        # Create vertical slider for the perturbation y position (height)
+        self.width_slider_pertu = ctk.CTkSlider(self.plaque_info_frame, height=self.plaque_width, from_=0, to=int(float(self.Simu_parameters['plaque_largeur'])), number_of_steps=100, command=self.update_pertu_green_circle, orientation="vertical", button_color="#1DBC60")
+        self.width_slider_pertu.set(float(self.Simu_parameters['perturbation_largeur']))  # Set initial y position to the middle
+        self.width_slider_pertu.grid(row=row_count-2, column=3, padx=(15,0), pady=(0,0), sticky="wns")
+        # Create corresponding Entry for perturbation position vertical slider
+        self.width_value_pertu = ctk.CTkEntry(self.plaque_info_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
+        self.width_value_pertu.grid(row=row_count - 3, column=3, pady=(0,0), padx=(0,0), sticky="w")
+        self.width_value_pertu.insert(0, str(self.plaque_length - self.width_slider_pertu.get()))  # Set initial value (reverse the initial y position)
+        self.width_value_pertu.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width_pertu"))
+        self.update_pertu_green_circle()
+        row_count+=1
+
+
+
+
+
 
         # Frame for Simu info
         self.simu_info_frame = ctk.CTkFrame(self.root)
@@ -383,7 +430,7 @@ class GUI:
         row_count+=1
 
         # Label for time actu start
-        Actu_start_time_label = ctk.CTkLabel(self.simu_info_frame, text="Démarrage de l'actuateur à (secondes) :")
+        Actu_start_time_label = ctk.CTkLabel(self.simu_info_frame, text="Démarrage de l'actuateur à (secondes) : ")
         Actu_start_time_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         # data Entry for actu start
         self.Actu_start_time_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
@@ -393,7 +440,7 @@ class GUI:
         row_count+=1
 
         # Label for time actu stop
-        Actu_stop_time_label = ctk.CTkLabel(self.simu_info_frame, text="Arrêt  de l'actuateur à (secondes) :")
+        Actu_stop_time_label = ctk.CTkLabel(self.simu_info_frame, text="Arrêt  de l'actuateur à (secondes) : ")
         Actu_stop_time_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         # data Entry for actu stop
         self.Actu_stop_time_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
@@ -403,7 +450,7 @@ class GUI:
         row_count+=1
 
         # Label for Maillage
-        Maillage_label = ctk.CTkLabel(self.simu_info_frame, text="Maillage (mm/éléments) :")
+        Maillage_label = ctk.CTkLabel(self.simu_info_frame, text="Maillage (mm/éléments) : ")
         Maillage_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         # data Entry for actu stop
         self.Maillage_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
@@ -416,14 +463,14 @@ class GUI:
         perturbation_power_label = ctk.CTkLabel(self.simu_info_frame, text="Puissance de la perturbation (Watt) :")
         perturbation_power_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
         # data Entry for Perturbation Power
-        self.perturbation_power_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.perturbation_power_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
         self.perturbation_power_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.perturbation_power_user_entry.insert("1", str(self.Simu_parameters['perturbation_power']))
         self.perturbation_power_user_entry.grid(row=row_count2, column=4, sticky="w")
         row_count2+=1
 
         # Label for Perturbation start
-        perturbation_start_label = ctk.CTkLabel(self.simu_info_frame, text="Début de la perturbation à (secondes) :")
+        perturbation_start_label = ctk.CTkLabel(self.simu_info_frame, text="Début de la perturbation à (secondes) : ")
         perturbation_start_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
         # data Entry for Perturbation Power
         self.perturbation_start_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
@@ -433,7 +480,7 @@ class GUI:
         row_count2+=1
 
         # Label for Perturbation stop
-        perturbation_stop_label = ctk.CTkLabel(self.simu_info_frame, text="Fin de la perturbation à (secondes) :")
+        perturbation_stop_label = ctk.CTkLabel(self.simu_info_frame, text="Fin de la perturbation à (secondes) : ")
         perturbation_stop_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
         # data Entry for Perturbation Power
         self.perturbation_stop_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
@@ -487,22 +534,38 @@ class GUI:
         self.plaque_canvas.create_rectangle(0, r, W, L - r, fill=color, outline=color)  # Left and right
 
     def update_actu_red_square(self, event=None):
-        x = self.length_slider.get()  
-        y = self.width_slider.get()
+        x = self.length_slider_actu.get()  
+        y = self.width_slider_actu.get()
         self.update_red_square()
-        self.length_value.delete(0, ctk.END)
-        self.length_value.insert(0, str(round(x,5)))
-        self.width_value.delete(0, ctk.END)
-        self.width_value.insert(0, str(round(y,5)))
+        self.length_value_actu.delete(0, ctk.END)
+        self.length_value_actu.insert(0, str(round(x,5)))
+        self.width_value_actu.delete(0, ctk.END)
+        self.width_value_actu.insert(0, str(round(y,5)))
 
     def update_red_square(self, event=None):
-        x = self.length_slider.get()  
-        y = self.width_slider.get()
+        x = self.length_slider_actu.get()  
+        y = self.width_slider_actu.get()
         pos_x_in_pix = int(self.plaque_length*x/(float(self.Simu_parameters['plaque_longueur'])))
         pos_y_in_pix = int(self.plaque_width*(float(self.Simu_parameters['plaque_largeur']) - y)/float(self.Simu_parameters['plaque_largeur']))
         half_longueur_actu_in_pix = int(self.plaque_length*float(self.Simu_parameters['longueur_actu'])/(float(self.Simu_parameters['plaque_longueur']))/2)
         half_largeur_actu_in_pix = int(self.plaque_width*float(self.Simu_parameters['largeur_actu'])/(float(self.Simu_parameters['plaque_largeur']))/2)
         self.plaque_canvas.coords(self.Actuateur_shape, pos_x_in_pix - half_longueur_actu_in_pix, pos_y_in_pix - half_largeur_actu_in_pix, pos_x_in_pix + half_longueur_actu_in_pix, pos_y_in_pix + half_largeur_actu_in_pix)
+    
+    def update_pertu_green_circle(self, event=None):
+        x = self.length_slider_pertu.get()  
+        y = self.width_slider_pertu.get()
+        self.update_green_circle()
+        self.length_value_pertu.delete(0, ctk.END)
+        self.length_value_pertu.insert(0, str(round(x,5)))
+        self.width_value_pertu.delete(0, ctk.END)
+        self.width_value_pertu.insert(0, str(round(y,5)))
+    
+    def update_green_circle(self, event=None):
+        x = self.length_slider_pertu.get()  
+        y = self.width_slider_pertu.get()
+        pos_x_in_pix = int(self.plaque_length*x/(float(self.Simu_parameters['plaque_longueur'])))
+        pos_y_in_pix = int(self.plaque_width*(float(self.Simu_parameters['plaque_largeur']) - y)/float(self.Simu_parameters['plaque_largeur']))
+        self.plaque_canvas.coords(self.Perturbation_shape, pos_x_in_pix+7, pos_y_in_pix+7, pos_x_in_pix-7, pos_y_in_pix-7)
 
     def validate_input(self, P):# Permet seulement les chiffres
         """Only allow numeric input (including decimal point)."""
@@ -554,21 +617,30 @@ class GUI:
             self.Simu_parameters['point_interet_3_longueur'] = self.Simu_parameters['plaque_longueur']/4*3
             print('OUT OF BONDS point_interet')
 
-
     def update_slider_from_entry(self, slider_type):
         try:
-            if slider_type == "length":
-                value = float(self.length_value.get())
+            if slider_type == "length_actu":
+                value = float(self.length_value_actu.get())
                 min_max_for_actu_size = math.ceil(self.Simu_parameters['longueur_actu']/ 2)
                 if min_max_for_actu_size <= value <= float(self.Simu_parameters['plaque_longueur']) - min_max_for_actu_size:
-                    self.length_slider.set(value)
+                    self.length_slider_actu.set(value)
                     self.update_red_square()
-            elif slider_type == "width":
-                value = float(self.width_value.get())
+            elif slider_type == "width_actu":
+                value = float(self.width_value_actu.get())
                 min_max_for_actu_size = math.ceil(self.Simu_parameters['largeur_actu']/ 2)
                 if min_max_for_actu_size <= value <= float(self.Simu_parameters['plaque_largeur'])-min_max_for_actu_size:
-                    self.width_slider.set(value)  # Reverse for vertical slider
+                    self.width_slider_actu.set(value)  # Reverse for vertical slider
                     self.update_red_square()
+            if slider_type == "length_pertu":
+                value = float(self.length_value_pertu.get())
+                if 0 <= value <= float(self.Simu_parameters['plaque_longueur']):
+                    self.length_slider_pertu.set(value)
+                    self.update_green_circle()
+            elif slider_type == "width_pertu":
+                value = float(self.width_value_pertu.get())
+                if 0 <= value <= float(self.Simu_parameters['plaque_largeur']):
+                    self.width_slider_pertu.set(value)  # Reverse for vertical slider
+                    self.update_green_circle()
         except ValueError:
             print('Error')
             pass  # Ignore invalid input (e.g., if the input is not a number)
