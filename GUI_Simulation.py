@@ -7,20 +7,19 @@ import json
 import matplotlib.pyplot as plt
 import copy
 import numpy
+import tempfile
 
-# TODO Parfois reinitialilser params ne fonctionne pas
-# TODO .txt, pas .csv (What un txt cest un csv
-# TODO manuel de l'utilisateur
-# TODO présence d'un Chrono
+# TODO Perturbation slider+show position
+# TODO faire en sorte que le csv exporter est plus clean (colone du temp en premier, mieu explique ce quon exporte)
+# TODO Présence d'un chrono en print()
 # TODO Les paramètres suivants doivent être dans l’interface:
-'''
-- Dimensions plaque
-- Spécifications du métal (cp, r)
-- Coefficient de conduction
-- Coefficient de convection
-- Couplage thermique entre lactuateur et la plaque
-'''
-# TODO Au moins 10 autres paramètres: mm/element, ...
+# TODO Chronometre
+# TODO light indicator for actu start stop
+# TODO tout faire les print en francais
+# TODO Au moins 10 autres paramètres
+# TODO Test variables dentre qui ne bug pas pour infini -infini et zero
+# TODO manuel de l'utilisateur
+# TODO clean Comments
 
 
 class GUI:
@@ -49,15 +48,15 @@ class GUI:
         self.Simu_parameters = {
             'plaque_largeur' : 60, # mm
             'plaque_longueur' : 116, # mm
-            'mm_par_element' : 1, # mm
+            'mm_par_element' : 2, # mm #BASE 1
             'Temperature_Ambiante_C' : 25, # C
             'position_longueur_actuateur' : 15, # mm
             'position_largeur_actuateur' : 30, # mm
             'largeur_actu' : 15, # mm
             'longueur_actu' : 15, # mm
-            'courant_actuateur' : 2.57, # W
+            'puissance_actuateur' : 3, # W
             'couple_actuateur' : 1, # NA
-            'convection_actuateur' : 1, # W/m2*K
+            'convection_actuateur' : 40, # W/m2*K
             'masse_volumique_plaque' : 2700, # kg/m3
             'masse_volumique_actu' : 3950, # kg/m3
             'epaisseur_plaque_mm' : 1.6, # mm
@@ -65,23 +64,28 @@ class GUI:
             'capacite_thermique_plaque' : 900, # J/Kg*K
             'capacite_thermique_Actu' : 760, # J/Kg*K
             'conductivite_thermique_plaque' : 110, # W/m*K
-            'coefficient_convection' : 22, # W/m2*K
+            'coefficient_convection' : 8, # W/m2*K
             'time_step' : 'auto', #sec
-            'simu_duration' : 100, #sec
+            'simu_duration' : 200, #sec #BASE 500
+            'actu_start' : 10, # sec
+            'actu_stop' : 150, # sec
             'point_interet_1_largeur' : 30, # mm
             'point_interet_1_longueur' : 15, # mm
             'point_interet_2_largeur' : 30, # mm
             'point_interet_2_longueur' : 60, # mm
             'point_interet_3_largeur' : 30, # mm
             'point_interet_3_longueur' : 105, # mm
+
+            'perturbation_longueur' : 100, # mm
+            'perturbation_largeur' : 30, # mm
+            'perturabtion_start' : 50, #sec
+            'perturabtion_stop' : 75, #sec
+            'perturbation_power' : 1 #W
         }
-        # self.Initial_parameters = self.Simu_parameters.copy()
-        self.Initial_parameters = copy.deepcopy(self.Simu_parameters)
-        # self.Initial_parameters = json.loads(json.dumps(self.Simu_parameters))
-        # self.Initial_parameters = {key: copy.deepcopy(value) for key, value in self.Simu_parameters.items()}
-        # for key in self.Initial_parameters:
-        #     print(f"ID of {key} in Simu_parameters: {id(self.Simu_parameters[key])}")
-        #     print(f"ID of {key} in Initial_parameters: {id(self.Initial_parameters[key])}")
+
+        with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".json") as temp_file:
+            self.temp_filename = temp_file.name  # Get the temporary file name
+            json.dump(self.Simu_parameters, temp_file, indent=4)
         
 
         self.load_frame() # Load initial frame
@@ -106,16 +110,22 @@ class GUI:
         self.Simu_parameters['plaque_longueur'] = float(self.plaque_length_user_entry.get())
         self.Simu_parameters['position_longueur_actuateur'] = float(self.length_value.get())
         self.Simu_parameters['position_largeur_actuateur'] = float(self.width_value.get())
-        self.Simu_parameters['courant_actuateur'] = float(self.actu_courant_user_entry.get())
+        self.Simu_parameters['puissance_actuateur'] = float(self.actu_puissance_user_entry.get())
         self.Simu_parameters['largeur_actu'] = float(self.actu_width_user_entry.get())
         self.Simu_parameters['longueur_actu'] = float(self.actu_length_user_entry.get())
-        self.Simu_parameters['simu_duration'] = float(self.simu_length_user_entry.get())        
+        self.Simu_parameters['simu_duration'] = float(self.simu_length_user_entry.get())  
+        self.Simu_parameters['actu_start'] = float(self.Actu_start_time_user_entry.get())  
+        self.Simu_parameters['actu_stop'] = float(self.Actu_stop_time_user_entry.get())  
+        self.Simu_parameters['mm_par_element'] = float(self.Maillage_user_entry.get())  
         self.Simu_parameters['masse_volumique_plaque'] = float(self.masse_volumique_plaque_user_entry.get())
         self.Simu_parameters['epaisseur_plaque_mm'] = float(self.epaisseur_plaque_mm_user_entry.get())
         self.Simu_parameters['capacite_thermique_plaque'] = float(self.capacite_thermique_plaque_user_entry.get())
         self.Simu_parameters['conductivite_thermique_plaque'] = float(self.conductivite_thermique_plaque_user_entry.get())
+        self.Simu_parameters['couple_actuateur'] = float(self.Couple_user_entry.get())
         self.Simu_parameters['coefficient_convection'] = float(self.coefficient_convection_user_entry.get())
-        
+        self.Simu_parameters['perturbation_power'] = float(self.perturbation_power_user_entry.get())
+        self.Simu_parameters['perturabtion_start'] = float(self.perturbation_start_user_entry.get())
+        self.Simu_parameters['perturabtion_stop'] = float(self.perturbation_stop_user_entry.get())        
         self.parameters_correction()
 
     def Test_function(self, event=None):
@@ -123,16 +133,18 @@ class GUI:
         for param, value in self.Simu_parameters.items():
             print(f'\t{param} : {value}')
         print('Initial simulation parameters:')
-        for param, value in self.Initial_parameters.items():
-            print(f'\t{param} : {value}')
+
+
+        with open(self.temp_filename, 'r') as temp_file:
+            loaded_parameters = json.load(temp_file)
+            for param, value in loaded_parameters.items():
+                print(f'\t{param} : {value}')
 
     def load_simu_params_from_json(self):
         json_path = filedialog.askopenfile(title="Sélectionnez un fichier JSON", filetypes=[("JSON files", "*.json")])
         if json_path != None:
             with open(json_path.name, 'r') as file:
                 self.Simu_parameters = json.load(file)
-            # self.Initial_parameters = self.Simu_parameters.copy()
-            self.Initial_parameters = copy.deepcopy(self.Simu_parameters)
             self.load_frame()
         else:
             print('No json. Selected')
@@ -167,7 +179,7 @@ class GUI:
         self.txt_path_button.grid(row=0, column=1, sticky="e", padx=(0,5), pady=(5,0))
          
         # TXT Save switch
-        self.TXT_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format .txt dans : {self.Save_as_path}", command=self.TXT_toggle)
+        self.TXT_switch = ctk.CTkSwitch(save_frame, text=f"Enregistrer au format texte dans : {self.Save_as_path}", command=self.TXT_toggle)
         self.TXT_switch.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(0,5))
         if self.save_txt_bool:
             self.TXT_switch.select()        
@@ -253,6 +265,16 @@ class GUI:
         self.conductivite_thermique_plaque_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
         row_count2+=1
 
+        # Label for Couple
+        couple_label = ctk.CTkLabel(self.plaque_info_frame, text="Couple plaque-actuateur : ")
+        couple_label.grid(row=row_count2, column=3, sticky="w", padx=(0,0), pady=(0,0))
+        # data Entry for Couple
+        self.Couple_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.Couple_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.Couple_user_entry.insert("1", str(self.Simu_parameters['couple_actuateur']))
+        self.Couple_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(0,0))
+        row_count2+=1
+
         # Label for plaque width
         plaque_width = ctk.CTkLabel(self.plaque_info_frame, text="Largeur de la plaque (mm) : ")
         plaque_width.grid(row=row_count, column=0, sticky="w", padx=(5,0))
@@ -263,6 +285,7 @@ class GUI:
         self.plaque_width_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
+        
         # Label for plaque length
         plaque_length = ctk.CTkLabel(self.plaque_info_frame, text="Longueur de la plaque (mm) : ")
         plaque_length.grid(row=row_count, column=0, sticky="w", padx=(5,0))
@@ -293,14 +316,14 @@ class GUI:
         self.actu_length_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
-        # Label for Actuateur Amp
-        Actu_courant_Label = ctk.CTkLabel(self.plaque_info_frame, text="Courant dans l'actuateur (A) : ")
-        Actu_courant_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
+        # Label for Actuateur Power
+        Actu_puissance_Label = ctk.CTkLabel(self.plaque_info_frame, text="Puissance dans l'actuateur (Watt) : ")
+        Actu_puissance_Label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
         # data Entry for Actuateur amp
-        self.actu_courant_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
-        self.actu_courant_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
-        self.actu_courant_user_entry.insert("1", str(self.Simu_parameters['courant_actuateur']))
-        self.actu_courant_user_entry.grid(row=row_count, column=1, sticky="w")
+        self.actu_puissance_user_entry = ctk.CTkEntry(self.plaque_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
+        self.actu_puissance_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.actu_puissance_user_entry.insert("1", str(self.Simu_parameters['puissance_actuateur']))
+        self.actu_puissance_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
         # Code for plaque with sliders:
@@ -347,17 +370,78 @@ class GUI:
         self.simu_info_frame.columnconfigure(0, weight=0)
         self.simu_info_frame.columnconfigure(1, weight=0)
         row_count = 0 # Facilite lajout de plus de widget
+        row_count2 = 0
 
         # Label for simu length
         simu_length_label = ctk.CTkLabel(self.simu_info_frame, text="Durée de la simulation (secondes) : ")
         simu_length_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
-        # data Entry for plaque length
+        # data Entry for simu length
         self.simu_length_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
         self.simu_length_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.simu_length_user_entry.insert("1", str(self.Simu_parameters['simu_duration']))
         self.simu_length_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
+        # Label for time actu start
+        Actu_start_time_label = ctk.CTkLabel(self.simu_info_frame, text="Démarrage de l'actuateur à (secondes) :")
+        Actu_start_time_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
+        # data Entry for actu start
+        self.Actu_start_time_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.Actu_start_time_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.Actu_start_time_user_entry.insert("1", str(self.Simu_parameters['actu_start']))
+        self.Actu_start_time_user_entry.grid(row=row_count, column=1, sticky="w")
+        row_count+=1
+
+        # Label for time actu stop
+        Actu_stop_time_label = ctk.CTkLabel(self.simu_info_frame, text="Arrêt  de l'actuateur à (secondes) :")
+        Actu_stop_time_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
+        # data Entry for actu stop
+        self.Actu_stop_time_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.Actu_stop_time_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.Actu_stop_time_user_entry.insert("1", str(self.Simu_parameters['actu_stop']))
+        self.Actu_stop_time_user_entry.grid(row=row_count, column=1, sticky="w")
+        row_count+=1
+
+        # Label for Maillage
+        Maillage_label = ctk.CTkLabel(self.simu_info_frame, text="Maillage (mm/éléments) :")
+        Maillage_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
+        # data Entry for actu stop
+        self.Maillage_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.Maillage_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.Maillage_user_entry.insert("1", str(self.Simu_parameters['mm_par_element']))
+        self.Maillage_user_entry.grid(row=row_count, column=1, sticky="w")
+        row_count+=1
+
+        # Label for Perturbation Power
+        perturbation_power_label = ctk.CTkLabel(self.simu_info_frame, text="Puissance de la perturbation (Watt) :")
+        perturbation_power_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
+        # data Entry for Perturbation Power
+        self.perturbation_power_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.perturbation_power_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.perturbation_power_user_entry.insert("1", str(self.Simu_parameters['perturbation_power']))
+        self.perturbation_power_user_entry.grid(row=row_count2, column=4, sticky="w")
+        row_count2+=1
+
+        # Label for Perturbation start
+        perturbation_start_label = ctk.CTkLabel(self.simu_info_frame, text="Début de la perturbation à (secondes) :")
+        perturbation_start_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
+        # data Entry for Perturbation Power
+        self.perturbation_start_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.perturbation_start_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.perturbation_start_user_entry.insert("1", str(self.Simu_parameters['perturabtion_start']))
+        self.perturbation_start_user_entry.grid(row=row_count2, column=4, sticky="w")
+        row_count2+=1
+
+        # Label for Perturbation stop
+        perturbation_stop_label = ctk.CTkLabel(self.simu_info_frame, text="Fin de la perturbation à (secondes) :")
+        perturbation_stop_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
+        # data Entry for Perturbation Power
+        self.perturbation_stop_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.perturbation_stop_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.perturbation_stop_user_entry.insert("1", str(self.Simu_parameters['perturabtion_stop']))
+        self.perturbation_stop_user_entry.grid(row=row_count2, column=4, sticky="w")
+        row_count2+=1
+        
         # Button for simulation
         self.HW_button = ctk.CTkButton(self.simu_info_frame, text="Lancer la Simulation", command=self.Simulate)
         self.HW_button.grid(row=row_count, column=0, pady=(5,5), padx=(5,0), sticky="w")
@@ -379,6 +463,7 @@ class GUI:
             plt.close('all')
             print(f"An error occurred during Simulation: {e}")
         self.root.attributes("-disabled", False)
+        self.root.lift()  # Raise the window
 
     def Save_as_clicked(self):
         New_save_as_path = filedialog.askdirectory(title='Enregister Sous')
@@ -489,7 +574,9 @@ class GUI:
             pass  # Ignore invalid input (e.g., if the input is not a number)
 
     def Reset_to_default(self):
-        self.Simu_parameters = self.Initial_parameters
+        with open(self.temp_filename, 'r') as temp_file:
+            loaded_parameters = json.load(temp_file)
+            self.Simu_parameters = loaded_parameters
         self.load_frame()
         
     def TXT_toggle(self):

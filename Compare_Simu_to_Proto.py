@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from Simulation import Plaque
 
 mode = 'chaud'
-mode = 'froid'
+# mode = 'froid'
 
 if mode == 'froid':
     data_refroidissement_path = os.path.dirname(os.path.abspath(__file__))+"\\Echelon_-0_39V.csv"
@@ -27,18 +27,18 @@ if mode == 'chaud':
     data_temp1 = column_arrays["Temp 1 (°C)"]
     data_temp2 = column_arrays["Temp 2 (°C)"]
     data_temp3 = column_arrays["Temp 3 (°C)"]
-    simu_duration = 510
+    simu_duration = 500
     sign_courant = 1
 
 # simu_duration = 50
 if mode == 'chaud':
-    couple_actuateur = 1.8
+    couple_actuateur = 1
     convection_actuateur = 40
-    coefficient_convection = 9
+    coefficient_convection = 8
 if mode == 'froid':
-    couple_actuateur = 1.7
-    convection_actuateur = 13
-    coefficient_convection = 11.5
+    couple_actuateur = 1
+    convection_actuateur = 40
+    coefficient_convection = 8
 
 My_params = {
     'plaque_largeur' : 60, # mm
@@ -50,6 +50,7 @@ My_params = {
     'largeur_actu' : 15, # mm
     'longueur_actu' : 15, # mm
     'courant_actuateur' : sign_courant*2.38, # W
+    'puissance_actuateur' : sign_courant*3, # W
     'couple_actuateur' : couple_actuateur, # NA #TODO ADJUST
     'convection_actuateur' : convection_actuateur, # W/m2*K #TODO ADJUST
     'masse_volumique_plaque' : 2700, # kg/m3
@@ -69,7 +70,37 @@ My_params = {
     'point_interet_3_largeur' : 30, # mm # TODO add slider
     'point_interet_3_longueur' : 105, # mm # TODO add slider
 }
-
+# My_params = {
+#     'plaque_largeur' : 60, # mm
+#     'plaque_longueur' : 116, # mm
+#     'mm_par_element' : 1, # mm
+#     'Temperature_Ambiante_C' : 25, # C
+#     'position_longueur_actuateur' : 15, # mm
+#     'position_largeur_actuateur' : 30, # mm
+#     'largeur_actu' : 15, # mm
+#     'longueur_actu' : 15, # mm
+#     'courant_actuateur' : 2.38, # W
+#     'puissance_actuateur' : 2.57, # W
+#     'couple_actuateur' : 1.8, # NA
+#     'convection_actuateur' : 40, # W/m2*K
+#     'masse_volumique_plaque' : 2700, # kg/m3
+#     'masse_volumique_actu' : 3950, # kg/m3
+#     'epaisseur_plaque_mm' : 1.6, # mm
+#     'epaisseur_actu_mm' : 0.05, # mm
+#     'capacite_thermique_plaque' : 900, # J/Kg*K
+#     'capacite_thermique_Actu' : 760, # J/Kg*K
+#     'conductivite_thermique_plaque' : 110, # W/m*K
+#     'coefficient_convection' : 9, # W/m2*K
+#     'time_step' : 'auto', #sec
+#     'simu_duration' : 500, #sec
+#     'point_interet_1_largeur' : 30, # mm
+#     'point_interet_1_longueur' : 15, # mm
+#     'point_interet_2_largeur' : 30, # mm
+#     'point_interet_2_longueur' : 60, # mm
+#     'point_interet_3_largeur' : 30, # mm
+#     'point_interet_3_longueur' : 105, # mm
+# }
+    
 plt.figure(figsize=(10, 5))
 My_plaque = Plaque(My_params)
 My_plaque.Launch_Simu(display_animation=False)

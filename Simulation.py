@@ -17,7 +17,7 @@ class Plaque:
         self.longueur_actu = float(Parameters['longueur_actu']) 
         self.position_longueur_actuateur = float(Parameters['position_longueur_actuateur']) 
         self.position_largeur_actuateur = float(Parameters['position_largeur_actuateur']) 
-        self.courant_actuateur = float(Parameters['courant_actuateur'])
+        self.puissance_actuateur = float(Parameters['puissance_actuateur'])
         self.couple_actuateur = float(Parameters['couple_actuateur'])
         self.convection_actuateur = float(Parameters['convection_actuateur'])
         self.masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
@@ -29,12 +29,21 @@ class Plaque:
         self.conductivite_thermique_plaque = float(Parameters['conductivite_thermique_plaque'])
         self.coefficient_convection = float(Parameters['coefficient_convection']) 
         self.simu_duration = float(Parameters['simu_duration'])
+        self.actu_start = float(Parameters['actu_start'])
+        self.actu_stop = float(Parameters['actu_stop'])
         self.Interest_point_largeur_1 = float(Parameters['point_interet_1_largeur'])
         self.Interest_point_longueur_1 = float(Parameters['point_interet_1_longueur'])
         self.Interest_point_largeur_2 = float(Parameters['point_interet_2_largeur'])
         self.Interest_point_longueur_2 = float(Parameters['point_interet_2_longueur'])
         self.Interest_point_largeur_3 = float(Parameters['point_interet_3_largeur'])
         self.Interest_point_longueur_3 = float(Parameters['point_interet_3_longueur'])
+
+        self.perturbation_longueur = float(Parameters['perturbation_longueur'])
+        self.perturbation_largeur = float(Parameters['perturbation_largeur'])
+        self.perturabtion_start = float(Parameters['perturabtion_start'])
+        self.perturabtion_stop = float(Parameters['perturabtion_stop'])
+        self.perturbation_power = float(Parameters['perturbation_power'])
+
         # Automatic time step
         if Parameters['time_step'] == 'auto':
             self.time_step = 1/(self.conductivite_thermique_plaque/0.2/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)**2)
@@ -63,8 +72,9 @@ class Plaque:
         self.Geometry_Actu = np.full((int(self.largeur_actu/self.mm_par_element), int(self.largeur_actu/self.mm_par_element)), float(self.Temperature_Ambiante))
 
         self.Cooling = False
-        if self.courant_actuateur < 0:
+        if self.puissance_actuateur < 0:
             self.Cooling = True
+
 
 
 
@@ -96,21 +106,10 @@ class Plaque:
         # Update the temperature matrix
         self.Geometry_Matrix += self.Constante_plaque * delta_T_voisin_plaque + self.Constante_Air_top_bot * delta_T_voisin_air_top_bot + self.Constante_Air_side * delta_T_voisin_air_side
 
-        # # Iterate Actuateur
-        # # Initialize delta_T_voisin_Actu with zeros
-        # delta_T_voisin_Actu = np.zeros_like(self.Geometry_Actu)
-        # # Somme des delta temp avec lair TOP BOT
-        # delta_T_voisin_air_top_bot = 2 * (self.Temperature_Ambiante - self.Geometry_Actu)
-        # # Somme des delta temp avec lair sides
-        # delta_T_voisin_air_side = np.zeros_like(self.Geometry_Actu)
-        # delta_T_voisin_air_side[:, 0] += self.Temperature_Ambiante - self.Geometry_Actu[:, 0]
-        # delta_T_voisin_air_side[:, -1] += self.Temperature_Ambiante - self.Geometry_Actu[:, -1]
-        # delta_T_voisin_air_side[0, :] += self.Temperature_Ambiante - self.Geometry_Actu[0, :]
-        # delta_T_voisin_air_side[-1, :] += self.Temperature_Ambiante - self.Geometry_Actu[-1, :]
-        # # Update the temperature matrix
-        # self.Geometry_Actu += self.Constante_Air_top_bot_Actu * delta_T_voisin_air_top_bot + self.Constante_Air_side_Actu * delta_T_voisin_air_side
-
-    def Heat_Pumped(self, Th, Delta_T, Courant):
+    def Heat_Pumped(self, Th, Delta_T, Power):
+        Courant = Power*1.2
+        if Courant == 0:
+            return
         a=1.21161+0.02535*Th
         b=-0.04109-0.00298*Th
         c=35.223+0.07174*Th
@@ -120,12 +119,20 @@ class Plaque:
         Delta_T_at_0 = c*Courant+d*Courant**2+e*Courant**3
         Power = Power_at_0*(1-Delta_T/Delta_T_at_0)
         self.count_power_queue =  self.count_power_queue+1
-        # if self.count_power_queue % 1000 == 0:
-        #     print(f'{Power} W pumped by actuator' )
         return Power
     
+    def perturbation_influence(self):
+        if self.perturbation_power == 0:
+            return
+        pos_y_perturbation = max(0,min(len(self.Geometry_Matrix)-1, int(self.perturbation_largeur/self.mm_par_element)))
+        pos_x_perturbation = max(0,min(len(self.Geometry_Matrix[0])-1, int(self.perturbation_longueur/self.mm_par_element)))
+
+        delta_temp = self.perturbation_power*self.time_step*self.couple_actuateur / (self.epaisseur_plaque_mm /1000 * (self.mm_par_element/1000)**2 * self.masse_volumique_plaque) / self.capacite_thermique_plaque
+        self.Geometry_Matrix[pos_y_perturbation, pos_x_perturbation] += delta_temp
+    
     def actuateur_influence(self):
-        
+        if self.largeur_actu==0 or self.longueur_actu ==0:
+            return
         pos_y_actu = max(0,min(len(self.Geometry_Matrix)-1, int(self.position_largeur_actuateur/self.mm_par_element)))
         pos_x_actu = max(0,min(len(self.Geometry_Matrix[0])-1, int(self.position_longueur_actuateur/self.mm_par_element)))
         largeur_actu_in_element = self.largeur_actu/self.mm_par_element
@@ -152,14 +159,12 @@ class Plaque:
         else:
             Th = np.average(self.Geometry_Matrix[y_range, x_range])
             Delta_T = Th - np.average(self.Geometry_Actu)
-            # print(np.average(self.Geometry_Actu))
-            # print(self.Temperature_Ambiante)
 
         Th_C = Th-273.15
         if self.Cooling:
-            Chaleur_en_jeu = -self.Heat_Pumped(Th_C, Delta_T, -self.courant_actuateur)*self.time_step*self.couple_actuateur
+            Chaleur_en_jeu = -self.Heat_Pumped(Th_C, Delta_T, -self.puissance_actuateur)*self.time_step*self.couple_actuateur
         else:
-            Chaleur_en_jeu = self.Heat_Pumped(Th_C, Delta_T, self.courant_actuateur)*self.time_step*self.couple_actuateur
+            Chaleur_en_jeu = self.Heat_Pumped(Th_C, Delta_T, self.puissance_actuateur)*self.time_step*self.couple_actuateur
 
         # print(f'Th : {Th}')
         # print(f'Delta_T : {Delta_T}')
@@ -257,7 +262,10 @@ class Plaque:
 
         def update(i):
             for j in range(display_frame_step): # Compute le nombre diteration pour faire 1 display_frame_step
-                self.actuateur_influence()
+                if self.actu_start < self.iteration_counter * self.time_step < self.actu_stop:
+                    self.actuateur_influence()
+                if self.perturabtion_start < self.iteration_counter * self.time_step < self.perturabtion_stop:
+                    self.perturbation_influence()
                 self.iterate()
                 self.iteration_counter += 1
             if save_txt != "Aucune Sélection": #Sauve a chaque secondes de simu
@@ -275,15 +283,15 @@ class Plaque:
             self.Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
             self.Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
             self.Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
+
             if display_animation:
-                # Display result
                 max_value_temp = np.max(self.Geometry_Matrix)
-                # Set the lowest temp on first iteration
-                if not hasattr(self, 'min_value_temp'):
-                    self.min_value_temp = np.min(self.Geometry_Matrix)
+                min_value_temp = np.min(self.Geometry_Matrix)
                 img.set_data(self.Geometry_Matrix - 273.15)
-                img.set_clim(self.min_value_temp  - 273.15, max_value_temp - 273.15)
-                ax1.set_title(f'Température de la plaque à T = {round(self.iteration_counter * self.time_step, 4)} secondes')
+                img.set_clim(min_value_temp - 273.15, max_value_temp - 273.15)
+                ax1.set_title(f'Température de la plaque à T = {int(round(self.iteration_counter * self.time_step, 0))} secondes')
+
+
             # Message if last iteration
             if self.iteration_counter >= iterations_number:
                 simu_elapsed_time = time.time() - simu_start_time
