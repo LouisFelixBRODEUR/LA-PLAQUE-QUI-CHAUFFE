@@ -199,6 +199,19 @@ class Plaque:
         Interest_point_x_2 = int(self.Interest_point_longueur_2 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
         Interest_point_y_3 = int(self.Interest_point_largeur_3 / self.plaque_largeur * len(self.Geometry_Matrix))
         Interest_point_x_3 = int(self.Interest_point_longueur_3 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
+
+        # Interest_point_y_1 = len(self.Geometry_Matrix)-1
+
+        # self.Geometry_Matrix[len(self.Geometry_Matrix)-1][len(self.Geometry_Matrix[0])-1]
+
+        Interest_point_y_1 = max(0, min(len(self.Geometry_Matrix)-1, Interest_point_y_1))
+        Interest_point_x_1 = max(0, min(len(self.Geometry_Matrix[0])-1, Interest_point_x_1))
+        Interest_point_y_2 = max(0, min(len(self.Geometry_Matrix)-1, Interest_point_y_2))
+        Interest_point_x_2 = max(0, min(len(self.Geometry_Matrix[0])-1, Interest_point_x_2))
+        Interest_point_y_3 = max(0, min(len(self.Geometry_Matrix)-1, Interest_point_y_3))
+        Interest_point_x_3 = max(0, min(len(self.Geometry_Matrix[0])-1, Interest_point_x_3))
+
+
         self.Interest_point_data_C_1 = []
         self.Interest_point_data_C_2 = []
         self.Interest_point_data_C_3 = []
@@ -228,7 +241,7 @@ class Plaque:
             img = ax1.imshow(self.Geometry_Matrix - 273.15, cmap='jet')
             cbar = plt.colorbar(img, pad=0.1)
             cbar.set_label('Temperature (°C)')
-            ax1.scatter(Interest_point_x_1, Interest_point_y_1, color="blue", s=200, marker='x')
+            ax1.scatter(Interest_point_x_1, Interest_point_y_1, color="#0096FF", s=200, marker='x')
             ax1.scatter(Interest_point_x_2, Interest_point_y_2, color="green", s=200, marker='x')
             ax1.scatter(Interest_point_x_3, Interest_point_y_3, color="black", s=200, marker='x')
 
@@ -268,18 +281,20 @@ class Plaque:
                     self.perturbation_influence()
                 self.iterate()
                 self.iteration_counter += 1
-            if save_txt != "Aucune Sélection": #Sauve a chaque secondes de simu
+
+            if save_txt != "Aucune Sélection":
                 output_dir = save_txt
                 os.makedirs(output_dir, exist_ok=True)
-                df = pd.DataFrame(self.Geometry_Matrix)
                 time_in_simulation = self.iteration_counter * self.time_step
-                df['Time (s)'] = time_in_simulation
+                geometry_2D = self.Geometry_Matrix  # a 2D list/array: [X][Y]
+                lines = [f"time = {time_in_simulation}\n"]
+                for row in geometry_2D:
+                    line = ",".join(str(val) for val in row)
+                    lines.append(line + "\n")
                 filename = os.path.join(output_dir, f"{time_stamp}_Simulation_Temp.csv")
-                if not os.path.exists(filename):
-                    df.to_csv(filename, index=False, header=True, mode='w')
-                else:
-                    df.to_csv(filename, index=False, header=False, mode='a')
-                
+                with open(filename, 'a') as f:
+                    f.writelines(lines)
+         
             self.Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
             self.Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
             self.Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
