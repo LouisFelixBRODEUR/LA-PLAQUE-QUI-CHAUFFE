@@ -9,8 +9,9 @@ import copy
 import numpy
 import tempfile
 
+# TODO Minor bug fixes in reload
+# TODO dautre places a mettre un reload? 
 # TODO Au moins 10 autres paramètres what de fuck?
-# TODO Flick when ENTER
 # TODO manuel de l'utilisateur
 # TODO Clean Comments
 
@@ -101,9 +102,39 @@ class GUI:
         print("Fermeture de l'application...")
         sys.exit()
 
+    # def on_enter_key(self, event=None):
+    #     self.Log_parameters()
+    #     self.load_frame()
+
     def on_enter_key(self, event=None):
         self.Log_parameters()
-        self.load_frame()
+        self.reload_frame()
+        # Remove self.load_frame() - we'll update values directly instead
+        # self.update_display_values()  # Add this new method
+
+
+    def update_display_values(self):
+        """Update displayed values without recreating widgets"""
+        # Update all entry fields with current parameters
+        self.Temp_ambiante_user_entry.delete(0, 'end')
+        self.Temp_ambiante_user_entry.insert(0, str(self.Simu_parameters['Temperature_Ambiante_C']))
+        
+        self.plaque_width_user_entry.delete(0, 'end')
+        self.plaque_width_user_entry.insert(0, str(self.Simu_parameters['plaque_largeur']))
+        
+        # Continue with all other entry fields...
+        # (You'll need to add similar lines for all your parameters)
+        
+        # Update the plaque display
+        self.update_plaque_display()
+
+    def update_plaque_display(self):
+        """Update just the plaque visualization without recreating widgets"""
+        self.update_red_square()
+        self.update_green_circle()
+        self.update_blue_cross()
+        self.update_green_cross()
+        self.update_white_cross()
 
     def Log_parameters(self):
         if self.length_value_actu.get() == '':
@@ -189,6 +220,196 @@ class GUI:
         with open(save_json_path, 'w') as file:
             json.dump(self.Simu_parameters, file, indent=4)
         print(f'Paramètres de simulation enregistrés dans : {save_json_path}')
+
+    def update_plaque_visualization(self):
+        """Update the plaque visualization without recreating widgets"""
+        # Calculate new plaque dimensions
+        self.plaque_width = min(self.plaque_display_size, 
+                            int(self.plaque_display_size * 
+                            float(self.Simu_parameters['plaque_largeur']) / 
+                            float(self.Simu_parameters['plaque_longueur'])))
+        self.plaque_length = min(self.plaque_display_size, 
+                            int(self.plaque_display_size * 
+                            float(self.Simu_parameters['plaque_longueur']) / 
+                            float(self.Simu_parameters['plaque_largeur'])))
+
+        # Resize the canvas and frame
+        self.plaque_box_frame.configure(width=self.plaque_length, height=self.plaque_width)
+        self.plaque_canvas.configure(width=self.plaque_length, height=self.plaque_width)
+        
+        # Clear and redraw the plaque
+        self.plaque_canvas.delete("all")
+        self.create_rounded_rectangle('gray10')
+        
+        # Recreate the visual elements
+        self.Actuateur_shape = self.plaque_canvas.create_rectangle(0, 0, 0, 0, 
+                                                                fill="#ff4242", 
+                                                                outline="#ff4242")
+        self.Perturbation_shape = self.plaque_canvas.create_oval(0, 0, 0, 0, 
+                                                            fill="#1DBC60", 
+                                                            outline="#1DBC60")
+        self.T1_shape = [
+            self.plaque_canvas.create_line(0, 0, 0, 0, fill="#0096FF", width=2),
+            self.plaque_canvas.create_line(0, 0, 0, 0, fill="#0096FF", width=2)
+        ]
+        self.T2_shape = [
+            self.plaque_canvas.create_line(0, 0, 0, 0, fill="#006400", width=2),
+            self.plaque_canvas.create_line(0, 0, 0, 0, fill="#006400", width=2)
+        ]
+        self.T3_shape = [
+            self.plaque_canvas.create_line(0, 0, 0, 0, fill="#FFFFFF", width=2),
+            self.plaque_canvas.create_line(0, 0, 0, 0, fill="#FFFFFF", width=2)
+        ]
+        
+        # Update all the positions
+        self.update_red_square()
+        self.update_green_circle()
+        self.update_blue_cross()
+        self.update_green_cross()
+        self.update_white_cross()
+
+    def update_sliders(self):
+        """Update all slider ranges and values"""
+        # Actuator position sliders
+        min_actu_length = math.ceil(self.Simu_parameters['longueur_actu'] / 2)
+        max_actu_length = float(self.Simu_parameters['plaque_longueur']) - min_actu_length
+        self.length_slider_actu.configure(
+            from_=min_actu_length,
+            to=max_actu_length,
+            width=self.plaque_length
+        )
+        if min_actu_length < max_actu_length:
+            self.length_slider_actu.set(float(self.Simu_parameters['position_longueur_actuateur']))
+            self.length_slider_actu.configure(state="normal")
+            self.length_value_actu.configure(state="normal")
+        else:
+            self.length_slider_actu.configure(state="disabled")
+            self.length_value_actu.configure(state="disabled")
+
+        min_actu_width = math.ceil(self.Simu_parameters['largeur_actu'] / 2)
+        max_actu_width = float(self.Simu_parameters['plaque_largeur']) - min_actu_width
+        self.width_slider_actu.configure(
+            from_=min_actu_width,
+            to=max_actu_width,
+            height=self.plaque_width
+        )
+        if min_actu_width < max_actu_width:
+            self.width_slider_actu.set(float(self.Simu_parameters['position_largeur_actuateur']))
+            self.width_slider_actu.configure(state="normal")
+            self.width_value_actu.configure(state="normal")
+        else:
+            self.width_slider_actu.configure(state="disabled")
+            self.width_value_actu.configure(state="disabled")
+
+        # Actuator position entries
+        self.length_value_actu.delete(0, 'end')
+        self.length_value_actu.insert(0, str(self.Simu_parameters['position_longueur_actuateur']))
+        self.width_value_actu.delete(0, 'end')
+        self.width_value_actu.insert(0, str(self.Simu_parameters['position_largeur_actuateur']))
+        
+
+        # Perturbation position sliders
+        self.length_slider_pertu.configure(
+            from_=0,
+            to=float(self.Simu_parameters['plaque_longueur']),
+            width=self.plaque_length
+        )
+        self.length_slider_pertu.set(float(self.Simu_parameters['perturbation_longueur']))
+        
+        self.width_slider_pertu.configure(
+            from_=0,
+            to=float(self.Simu_parameters['plaque_largeur']),
+            height=self.plaque_width
+        )
+        self.width_slider_pertu.set(float(self.Simu_parameters['perturbation_largeur']))
+
+        # Perturbation position entries
+        self.length_value_pertu.delete(0, 'end')
+        self.length_value_pertu.insert(0, str(self.Simu_parameters['perturbation_longueur']))
+        self.width_value_pertu.delete(0, 'end')
+        self.width_value_pertu.insert(0, str(self.Simu_parameters['perturbation_largeur']))
+
+        # Temperature point sliders (T1, T2, T3)
+        for point in ['T1', 'T2', 'T3']:
+            length_slider = getattr(self, f'length_slider_{point}')
+            width_slider = getattr(self, f'width_slider_{point}')
+            length_value = getattr(self, f'length_value_{point}')
+            width_value = getattr(self, f'width_value_{point}')
+
+            length_slider.configure(
+                from_=0,
+                to=float(self.Simu_parameters['plaque_longueur']),
+                width=self.plaque_length
+            )
+            length_slider.set(float(self.Simu_parameters[f'point_interet_{point.lower()[-1]}_longueur']))
+            
+            width_slider.configure(
+                from_=0,
+                to=float(self.Simu_parameters['plaque_largeur']),
+                height=self.plaque_width
+            )
+            width_slider.set(float(self.Simu_parameters[f'point_interet_{point.lower()[-1]}_largeur']))
+            
+            # Update the entry fields
+            length_value.delete(0, 'end')
+            length_value.insert(0, str(length_slider.get()))
+            width_value.delete(0, 'end')
+            width_value.insert(0, str(width_slider.get()))
+
+        self.update_actu_red_square()
+        self.update_pertu_green_circle()
+        self.update_T1_blue_cross()
+        self.update_T2_green_cross()
+        self.update_T3_white_cross()
+
+    def update_entries(self):
+        self.Temp_ambiante_user_entry.delete(0, 'end')
+        self.Temp_ambiante_user_entry.insert("1", str(self.Simu_parameters['Temperature_Ambiante_C']))
+        self.masse_volumique_plaque_user_entry.delete(0, 'end')
+        self.masse_volumique_plaque_user_entry.insert("1", str(self.Simu_parameters['masse_volumique_plaque']))
+        self.capacite_thermique_plaque_user_entry.delete(0, 'end')
+        self.capacite_thermique_plaque_user_entry.insert("1", str(self.Simu_parameters['capacite_thermique_plaque']))
+        self.coefficient_convection_user_entry.delete(0, 'end')
+        self.coefficient_convection_user_entry.insert("1", str(self.Simu_parameters['coefficient_convection']))
+        self.epaisseur_plaque_mm_user_entry.delete(0, 'end')
+        self.epaisseur_plaque_mm_user_entry.insert("1", str(self.Simu_parameters['epaisseur_plaque_mm']))
+        self.conductivite_thermique_plaque_user_entry.delete(0, 'end')
+        self.conductivite_thermique_plaque_user_entry.insert("1", str(self.Simu_parameters['conductivite_thermique_plaque']))
+        self.Couple_user_entry.delete(0, 'end')
+        self.Couple_user_entry.insert("1", str(self.Simu_parameters['couple_actuateur']))
+        self.plaque_width_user_entry.delete(0, 'end')
+        self.plaque_width_user_entry.insert("1", str(self.Simu_parameters['plaque_largeur']))
+        self.plaque_length_user_entry.delete(0, 'end')
+        self.plaque_length_user_entry.insert("1", str(self.Simu_parameters['plaque_longueur']))
+        self.actu_width_user_entry.delete(0, 'end')
+        self.actu_width_user_entry.insert("1", str(self.Simu_parameters['largeur_actu']))
+        self.actu_length_user_entry.delete(0, 'end')
+        self.actu_length_user_entry.insert("1", str(self.Simu_parameters['longueur_actu']))
+        self.actu_puissance_user_entry.delete(0, 'end')
+        self.actu_puissance_user_entry.insert("1", str(self.Simu_parameters['puissance_actuateur']))
+        self.simu_length_user_entry.delete(0, 'end')
+        self.simu_length_user_entry.insert("1", str(self.Simu_parameters['simu_duration']))
+        self.Actu_start_time_user_entry.delete(0, 'end')
+        self.Actu_start_time_user_entry.insert("1", str(self.Simu_parameters['actu_start']))
+        self.Actu_stop_time_user_entry.delete(0, 'end')
+        self.Actu_stop_time_user_entry.insert("1", str(self.Simu_parameters['actu_stop']))
+        self.Maillage_user_entry.delete(0, 'end')
+        self.Maillage_user_entry.insert("1", str(self.Simu_parameters['mm_par_element']))
+        self.perturbation_power_user_entry.delete(0, 'end')
+        self.perturbation_power_user_entry.insert("1", str(self.Simu_parameters['perturbation_power']))
+        self.perturbation_start_user_entry.delete(0, 'end')
+        self.perturbation_start_user_entry.insert("1", str(self.Simu_parameters['perturabtion_start']))
+        self.perturbation_stop_user_entry.delete(0, 'end')
+        self.perturbation_stop_user_entry.insert("1", str(self.Simu_parameters['perturabtion_stop']))
+        self.simu_acceleration_factor_user_entry.delete(0, 'end')
+        self.simu_acceleration_factor_user_entry.insert("1", str(self.Simu_parameters['simu_acceleration_factor']))
+
+    def reload_frame(self):
+        if self.save_txt_bool:
+            self.TXT_switch.select()
+        self.update_entries()
+        self.update_plaque_visualization()
+        self.update_sliders()
 
     def load_frame(self):
         for widget in self.scroll_root.winfo_children():
