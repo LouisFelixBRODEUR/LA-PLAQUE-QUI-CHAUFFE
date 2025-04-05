@@ -29,6 +29,7 @@ class Plaque:
         self.conductivite_thermique_plaque = float(Parameters['conductivite_thermique_plaque'])
         self.coefficient_convection = float(Parameters['coefficient_convection']) 
         self.simu_duration = float(Parameters['simu_duration'])
+        self.simu_playspeed_multiplier = float(Parameters['simu_acceleration_factor'])
         self.actu_start = float(Parameters['actu_start'])
         self.actu_stop = float(Parameters['actu_stop'])
         self.Interest_point_largeur_1 = float(Parameters['point_interet_1_largeur'])
@@ -37,7 +38,6 @@ class Plaque:
         self.Interest_point_longueur_2 = float(Parameters['point_interet_2_longueur'])
         self.Interest_point_largeur_3 = float(Parameters['point_interet_3_largeur'])
         self.Interest_point_longueur_3 = float(Parameters['point_interet_3_longueur'])
-
         self.perturbation_longueur = float(Parameters['perturbation_longueur'])
         self.perturbation_largeur = float(Parameters['perturbation_largeur'])
         self.perturabtion_start = float(Parameters['perturabtion_start'])
@@ -49,6 +49,14 @@ class Plaque:
             self.time_step = 1/(self.conductivite_thermique_plaque/0.2/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)**2)
         else:
             self.time_step = float(Parameters['time_step'])
+
+        if self.simu_playspeed_multiplier <= 0:
+            self.simu_playspeed_multiplier = 0.0001
+            print("Vitesse d'affichage de la simulation infiniment plus lente que la simulation... Vous attendrez une éternité :.(")
+            return
+        elif self.simu_playspeed_multiplier < 1:
+            print("Vitesse d'affichage de la simulation plus lente que la simulation")
+
 
         # Convection Q̇ = h•A•ΔT
         # Conduction Q̇ = κ•A•ΔT/l
@@ -223,7 +231,6 @@ class Plaque:
         display_frame_step = max(1,int(iterations_number/self.simu_duration))
         time_data = np.append(np.arange(0, iterations_number*self.time_step, display_frame_step*self.time_step),iterations_number*self.time_step)
 
-
         if display_animation:
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
             if Debug:
@@ -326,11 +333,19 @@ class Plaque:
                 T_max = np.max([np.max(y1), np.max(y2), np.max(y3)]) + 5
                 T_min = np.min([np.min(y1), np.min(y2), np.min(y3)]) - 5
                 ax2.set_ylim(T_min, T_max)  # Adjust Y-limits
+                
+                if i > 0:
+                    simu_time = self.iteration_counter * self.time_step
+                    # if simu_time/self.simu_playspeed_multiplier > time.time()-simu_start_time:
+                    #     time.sleep(simu_time/self.simu_playspeed_multiplier-(time.time()-simu_start_time))
+                    while simu_time/self.simu_playspeed_multiplier > time.time()-simu_start_time:
+                        pass
+
                 return img, thermi_1, thermi_2, thermi_3
 
         if display_animation:  
             self.iteration_counter = 0
-            ani = animation.FuncAnimation(fig, update, frames=range(0, iterations_number - display_frame_step, display_frame_step), interval=0, blit=False, repeat=False, cache_frame_data=False)            
+            self.ani = animation.FuncAnimation(fig, update, frames=range(0, iterations_number - display_frame_step, display_frame_step), interval=0, blit=False, repeat=False, cache_frame_data=False)  
             plt.show()
         else:
             self.iteration_counter = 0

@@ -10,10 +10,10 @@ import numpy
 import tempfile
 
 # TODO Au moins 10 autres paramètres what de fuck?
+# TODO add a scroll bar
 # TODO Perturbation non-ponctuelle
 # TODO Flick when ENTER
 # TODO Chronomètre ??en print()??
-# TODO Vitesse de jouage de la simulation
 # TODO Test variables dentre qui ne bug pas pour infini -infini et zero -> Cap sur certaine valeur
 # TODO manuel de l'utilisateur
 # TODO Clean Comments
@@ -76,7 +76,8 @@ class GUI:
             'perturbation_largeur' : 10, # mm
             'perturabtion_start' : 50, #sec
             'perturabtion_stop' : 75, #sec
-            'perturbation_power' : 5 #W
+            'perturbation_power' : 5, #W
+            'simu_acceleration_factor' : 10 #Multiplier
         }
 
         with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".json") as temp_file:
@@ -146,6 +147,7 @@ class GUI:
         self.Simu_parameters['perturbation_power'] = float(self.perturbation_power_user_entry.get())
         self.Simu_parameters['perturabtion_start'] = float(self.perturbation_start_user_entry.get())
         self.Simu_parameters['perturabtion_stop'] = float(self.perturbation_stop_user_entry.get())        
+        self.Simu_parameters['simu_acceleration_factor'] = float(self.simu_acceleration_factor_user_entry.get())  
         self.parameters_correction()
 
     def Test_function(self, event=None):
@@ -517,6 +519,7 @@ class GUI:
         self.simu_length_user_entry.grid(row=row_count, column=1, sticky="w")
         row_count+=1
 
+
         # Label for time actu start
         Actu_start_time_label = ctk.CTkLabel(self.simu_info_frame, text="Démarrage de l'actuateur à (secondes) : ")
         Actu_start_time_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
@@ -575,6 +578,16 @@ class GUI:
         self.perturbation_stop_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.perturbation_stop_user_entry.insert("1", str(self.Simu_parameters['perturabtion_stop']))
         self.perturbation_stop_user_entry.grid(row=row_count2, column=4, sticky="w")
+        row_count2+=1
+
+        # Label for simu_acceleration_factor
+        simu_acceleration_factor_label = ctk.CTkLabel(self.simu_info_frame, text="Facteur d'accélération d'affichage : ")
+        simu_acceleration_factor_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
+        # data Entry for simu_acceleration_factor
+        self.simu_acceleration_factor_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
+        self.simu_acceleration_factor_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
+        self.simu_acceleration_factor_user_entry.insert("1", str(self.Simu_parameters['simu_acceleration_factor']))
+        self.simu_acceleration_factor_user_entry.grid(row=row_count2, column=4, sticky="w")
         row_count2+=1
         
         # Button for simulation
