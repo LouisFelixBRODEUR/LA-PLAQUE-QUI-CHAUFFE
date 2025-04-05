@@ -10,11 +10,7 @@ import numpy
 import tempfile
 
 # TODO Au moins 10 autres paramètres what de fuck?
-# TODO add a scroll bar
-# TODO Perturbation non-ponctuelle
 # TODO Flick when ENTER
-# TODO Chronomètre ??en print()??
-# TODO Test variables dentre qui ne bug pas pour infini -infini et zero -> Cap sur certaine valeur
 # TODO manuel de l'utilisateur
 # TODO Clean Comments
 
@@ -23,7 +19,10 @@ class GUI:
     def __init__(self):
         # Initialize root window
         self.root = ctk.CTk()
-        self.root.geometry("800x850")
+        self.root.geometry("810x650")
+        self.root.minsize(810, 0)
+
+        
         self.background_color = "#1e1e1e" # Dark gray background
         self.root.configure(bg=self.background_color)
         self.root.title("Controleur Simulation")
@@ -31,6 +30,16 @@ class GUI:
         self.validate_cmd = self.root.register(self.validate_input)
         self.validate_cmd_Neg = self.root.register(self.validate_input_Neg)
         self.root.bind("<Control-q>", self.Test_function)
+
+        self.scroll_root = ctk.CTkScrollableFrame(self.root, fg_color='#1e1e1e', border_width=0, corner_radius=0)
+        # self.root.pack_propagate(False)  # Prevent shrinking
+        # self.scroll_root.pack(expand=True, fill="both")
+        self.root.grid_propagate(False)  # Prevent shrinking
+        self.scroll_root.grid(row=0, column=0, sticky="nsew", pady=(0,0), padx=(0,0))
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        # self.scroll_root.pack()
+
 
         ctk.set_appearance_mode("dark")  # Dark mode for better contrast
         ctk.set_default_color_theme("blue")  # Blue theme for buttons and other elements
@@ -182,11 +191,11 @@ class GUI:
         print(f'Paramètres de simulation enregistrés dans : {save_json_path}')
 
     def load_frame(self):
-        for widget in self.root.winfo_children():
+        for widget in self.scroll_root.winfo_children():
             widget.destroy()
 
         # Frame for save path and button
-        save_frame = ctk.CTkFrame(self.root)
+        save_frame = ctk.CTkFrame(self.scroll_root)
         save_frame.grid(row=0, column=0, columnspan=2, pady=(self.pix_spacing, self.pix_spacing/2), padx=self.pix_spacing, sticky="ew")
         save_frame.columnconfigure(0, weight=1)
         save_frame.columnconfigure(1, weight=0)
@@ -209,7 +218,7 @@ class GUI:
         self.Json_path_button.grid(row=2, column=0, sticky="w", padx=(5,0), pady=(0,5))
 
         # Frame for plaque info
-        self.plaque_info_frame = ctk.CTkFrame(self.root)
+        self.plaque_info_frame = ctk.CTkFrame(self.scroll_root)
         self.plaque_info_frame.grid(row=1, column=0, columnspan=2, pady=self.pix_spacing/2, padx=self.pix_spacing, sticky="ew")
         self.plaque_info_frame.columnconfigure(0, weight=0)
         self.plaque_info_frame.columnconfigure(1, weight=0)
@@ -344,8 +353,8 @@ class GUI:
         row_count = max(row_count, row_count2)
         # Code for plaque with sliders:
         # Label
-        PosActu_Label = ctk.CTkLabel(self.plaque_info_frame, text="Position de l'actuateur, des thermistance et de la perturbation (mm) :")
-        PosActu_Label.grid(row=row_count, column=0, columnspan=2, sticky="w", padx=(5,0))
+        PosActu_Label = ctk.CTkLabel(self.plaque_info_frame, text="Position de l'actuateur, des thermistances et de la perturbation (mm) :")
+        PosActu_Label.grid(row=row_count, column=0, columnspan=2, sticky="w", padx=(5,0), pady=(5,0))
         row_count += 1
 
         # Plaque
@@ -405,7 +414,7 @@ class GUI:
         self.width_slider_actu.grid(row=1, column=0, padx=(18,0), pady=(0,0), sticky="wns")
         # Create corresponding Entry for actuateur's y position vertical slider
         self.width_value_actu = ctk.CTkEntry(self.vertical_sliders_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.width_value_actu.grid(row=0, column=0, pady=(0,0), padx=(0,0), sticky="w")
+        self.width_value_actu.grid(row=0, column=0, pady=(5,0), padx=(0,0), sticky="w")
         self.width_value_actu.insert(0, str(self.width_slider_actu.get()))  # Set initial value (reverse the initial y position)
         if self.width_slider_actu.cget("from_") >= self.width_slider_actu.cget("to"):
             self.width_value_actu.configure(state="disabled")
@@ -429,7 +438,7 @@ class GUI:
         self.width_slider_pertu.grid(row=1, column=1, padx=(18,0), pady=(0,0), sticky="wns")
         # Create corresponding Entry for perturbation position vertical slider
         self.width_value_pertu = ctk.CTkEntry(self.vertical_sliders_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.width_value_pertu.grid(row=0, column=1, pady=(0,0), padx=(0,0), sticky="w")
+        self.width_value_pertu.grid(row=0, column=1, pady=(5,0), padx=(0,0), sticky="w")
         self.width_value_pertu.insert(0, str(self.width_slider_pertu.get()))  # Set initial value (reverse the initial y position)
         self.width_value_pertu.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width_pertu"))
         self.update_pertu_green_circle()
@@ -451,7 +460,7 @@ class GUI:
         self.width_slider_T1.grid(row=1, column=2, padx=(18,0), pady=(0,0), sticky="wns")
         # Create corresponding Entry for T1 position vertical slider
         self.width_value_T1 = ctk.CTkEntry(self.vertical_sliders_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.width_value_T1.grid(row=0, column=2, pady=(0,0), padx=(0,0), sticky="w")
+        self.width_value_T1.grid(row=0, column=2, pady=(5,0), padx=(0,0), sticky="w")
         self.width_value_T1.insert(0, str(self.width_slider_T1.get()))  # Set initial value (reverse the initial y position)
         self.width_value_T1.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width_T1"))
         self.update_T1_blue_cross()
@@ -473,7 +482,7 @@ class GUI:
         self.width_slider_T2.grid(row=1, column=3, padx=(18,0), pady=(0,0), sticky="wns")
         # Create corresponding Entry for T2 position vertical slider
         self.width_value_T2 = ctk.CTkEntry(self.vertical_sliders_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.width_value_T2.grid(row=0, column=3, pady=(0,0), padx=(0,0), sticky="w")
+        self.width_value_T2.grid(row=0, column=3, pady=(5,0), padx=(0,0), sticky="w")
         self.width_value_T2.insert(0, str(self.width_slider_T2.get()))  # Set initial value (reverse the initial y position)
         self.width_value_T2.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width_T2"))
         self.update_T2_green_cross()
@@ -495,14 +504,14 @@ class GUI:
         self.width_slider_T3.grid(row=1, column=4, padx=(18,0), pady=(0,0), sticky="wns")
         # Create corresponding Entry for T3 position vertical slider
         self.width_value_T3 = ctk.CTkEntry(self.vertical_sliders_frame, width=50, validate="key", validatecommand=(self.validate_cmd, "%P"), justify='center')
-        self.width_value_T3.grid(row=0, column=4, pady=(0,0), padx=(0,0), sticky="w")
+        self.width_value_T3.grid(row=0, column=4, pady=(5,0), padx=(0,0), sticky="w")
         self.width_value_T3.insert(0, str(self.width_slider_T3.get()))  # Set initial value (reverse the initial y position)
         self.width_value_T3.bind("<KeyRelease>", lambda e: self.update_slider_from_entry("width_T3"))
         self.update_T3_white_cross()
         row_count+=1
 
         # Frame for Simu info
-        self.simu_info_frame = ctk.CTkFrame(self.root)
+        self.simu_info_frame = ctk.CTkFrame(self.scroll_root)
         self.simu_info_frame.grid(row=2, column=0, columnspan=2, pady=self.pix_spacing/2, padx=self.pix_spacing, sticky="ew")
         self.simu_info_frame.columnconfigure(0, weight=0)
         self.simu_info_frame.columnconfigure(1, weight=0)
@@ -511,12 +520,12 @@ class GUI:
 
         # Label for simu length
         simu_length_label = ctk.CTkLabel(self.simu_info_frame, text="Durée de la simulation (secondes) : ")
-        simu_length_label.grid(row=row_count, column=0, sticky="w", padx=(5,0))
+        simu_length_label.grid(row=row_count, column=0, sticky="w", padx=(5,0), pady=(5,0))
         # data Entry for simu length
         self.simu_length_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd, "%P"))
         self.simu_length_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.simu_length_user_entry.insert("1", str(self.Simu_parameters['simu_duration']))
-        self.simu_length_user_entry.grid(row=row_count, column=1, sticky="w")
+        self.simu_length_user_entry.grid(row=row_count, column=1, sticky="w", pady=(5,0))
         row_count+=1
 
 
@@ -552,12 +561,12 @@ class GUI:
 
         # Label for Perturbation Power
         perturbation_power_label = ctk.CTkLabel(self.simu_info_frame, text="Puissance de la perturbation (Watt) :")
-        perturbation_power_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0))
+        perturbation_power_label.grid(row=row_count2, column=3, sticky="w", padx=(5,0), pady=(5,0))
         # data Entry for Perturbation Power
         self.perturbation_power_user_entry = ctk.CTkEntry(self.simu_info_frame, justify='center', validate="key", validatecommand=(self.validate_cmd_Neg, "%P"))
         self.perturbation_power_user_entry.bind("<Return>", self.on_enter_key) # Catch any keystroke
         self.perturbation_power_user_entry.insert("1", str(self.Simu_parameters['perturbation_power']))
-        self.perturbation_power_user_entry.grid(row=row_count2, column=4, sticky="w")
+        self.perturbation_power_user_entry.grid(row=row_count2, column=4, sticky="w", pady=(5,0))
         row_count2+=1
 
         # Label for Perturbation start
@@ -595,11 +604,12 @@ class GUI:
         self.HW_button.grid(row=row_count, column=0, pady=(5,5), padx=(5,0), sticky="w")
 
         # Configure column weights
-        self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
+        self.scroll_root.grid_columnconfigure(0, weight=1)
+        self.scroll_root.grid_columnconfigure(1, weight=1)
 
     def Simulate(self):
         self.on_enter_key()
+        # self.scroll_root.attributes("-disabled", True)
         self.root.attributes("-disabled", True)
         My_plaque = Plaque(self.Simu_parameters)
         try:
@@ -610,6 +620,8 @@ class GUI:
         except Exception as e:
             plt.close('all')
             print(f"Une erreur s'est produite pendant la simulation : {e}")
+        # self.scroll_root.attributes("-disabled", False)
+        # self.scroll_root.lift()  # Raise the window
         self.root.attributes("-disabled", False)
         self.root.lift()  # Raise the window
 
@@ -738,34 +750,7 @@ class GUI:
         else:
             return False
 
-    def parameters_correction(self):
-        # # Si actuateur est plus grand que plaque, reduire taille actuateur
-        # # Si 
-
-
-
-        # # # Si plaque trop large ou trop longue pour lactuateur
-        # # self.Simu_parameters['plaque_largeur'] = min(self.Simu_parameters['largeur_actu'], self.Simu_parameters['plaque_largeur'])
-        # # self.Simu_parameters['plaque_longueur'] = min(self.Simu_parameters['longueur_actu'], self.Simu_parameters['plaque_longueur'])
-        # # # Si position actuateur hors de la plaque
-        # # self.Simu_parameters['position_longueur_actuateur'] = max(self.Simu_parameters['longueur_actu']/2,min(self.Simu_parameters['plaque_longueur']-self.Simu_parameters['longueur_actu']/2, self.Simu_parameters['position_longueur_actuateur']))
-        # # self.Simu_parameters['position_largeur_actuateur'] = max(self.Simu_parameters['largeur_actu']/2,min(self.Simu_parameters['plaque_largeur']-self.Simu_parameters['largeur_actu']/2, self.Simu_parameters['position_largeur_actuateur']))
-        
-        
-        # # # Si plaque trop large ou trop longue pour lactuateur
-        # # if self.Simu_parameters['largeur_actu'] > self.Simu_parameters['plaque_largeur']:
-        # #     self.Simu_parameters['plaque_largeur'] = self.Simu_parameters['largeur_actu']
-        # # if self.Simu_parameters['longueur_actu'] > self.Simu_parameters['plaque_longueur']:
-        # #     self.Simu_parameters['plaque_longueur'] = self.Simu_parameters['longueur_actu']
-        # # # Si position actuateur hors de la plaque
-        # # if not(self.Simu_parameters['largeur_actu']/2 < self.Simu_parameters['position_largeur_actuateur'] < self.Simu_parameters['plaque_largeur']-self.Simu_parameters['largeur_actu']/2):
-        # #     self.Simu_parameters['position_largeur_actuateur'] = self.Simu_parameters['plaque_largeur']/2
-        # # if not(self.Simu_parameters['longueur_actu']/2 < self.Simu_parameters['position_longueur_actuateur'] < self.Simu_parameters['plaque_longueur']-self.Simu_parameters['longueur_actu']/2):
-        # #     self.Simu_parameters['position_longueur_actuateur'] = self.Simu_parameters['plaque_longueur']/2
-        
-        # pass
-
-        
+    def parameters_correction(self):        
         # S'assurer que la plaque est au moins aussi grande que l'actuateur
         self.Simu_parameters['plaque_largeur'] = max(
             self.Simu_parameters['plaque_largeur'],
@@ -794,6 +779,27 @@ class GUI:
                 self.Simu_parameters['position_longueur_actuateur']
             )
         )
+
+        # Bounds pour pas que des caves pètent la simu
+        self.Simu_parameters['plaque_largeur'] = max(1,min(1000,self.Simu_parameters['plaque_largeur']))
+        self.Simu_parameters['plaque_longueur'] = max(1,min(1000,self.Simu_parameters['plaque_longueur']))
+        self.Simu_parameters['puissance_actuateur'] = max(-10,min(10,self.Simu_parameters['puissance_actuateur']))
+        self.Simu_parameters['masse_volumique_plaque'] = max(0.0001,min(50000,self.Simu_parameters['masse_volumique_plaque']))
+        self.Simu_parameters['capacite_thermique_plaque'] = max(0.0001,min(50000,self.Simu_parameters['capacite_thermique_plaque']))
+        self.Simu_parameters['coefficient_convection'] = max(0.0001,min(50000,self.Simu_parameters['coefficient_convection']))
+        self.Simu_parameters['epaisseur_plaque_mm'] = max(0.0001,min(100,self.Simu_parameters['epaisseur_plaque_mm']))
+        self.Simu_parameters['conductivite_thermique_plaque'] = max(0.0001,min(50000,self.Simu_parameters['conductivite_thermique_plaque']))
+        self.Simu_parameters['couple_actuateur'] = max(0.0001,min(10,self.Simu_parameters['couple_actuateur']))
+        self.Simu_parameters['simu_duration'] = max(10, min(10000,self.Simu_parameters['simu_duration']))
+        self.Simu_parameters['simu_acceleration_factor'] = max(1, min(100,self.Simu_parameters['simu_acceleration_factor']))
+        self.Simu_parameters['actu_start'] = max(0, min(10000,self.Simu_parameters['actu_start']))
+        self.Simu_parameters['actu_stop'] = max(0, min(10000,self.Simu_parameters['actu_stop']))
+        self.Simu_parameters['perturabtion_start'] = max(0, min(10000,self.Simu_parameters['perturabtion_start']))
+        self.Simu_parameters['perturabtion_stop'] = max(0, min(10000,self.Simu_parameters['perturabtion_stop']))
+        self.Simu_parameters['mm_par_element'] = max(0.5, min(10,self.Simu_parameters['mm_par_element']))
+        self.Simu_parameters['perturbation_power'] = max(-100, min(100,self.Simu_parameters['perturbation_power']))
+
+
 
 
     def update_slider_from_entry(self, slider_type):

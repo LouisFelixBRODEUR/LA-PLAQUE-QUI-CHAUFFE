@@ -50,14 +50,6 @@ class Plaque:
         else:
             self.time_step = float(Parameters['time_step'])
 
-        if self.simu_playspeed_multiplier <= 0:
-            self.simu_playspeed_multiplier = 0.0001
-            print("Vitesse d'affichage de la simulation infiniment plus lente que la simulation... Vous attendrez une éternité :.(")
-            return
-        elif self.simu_playspeed_multiplier < 1:
-            print("Vitesse d'affichage de la simulation plus lente que la simulation")
-
-
         # Convection Q̇ = h•A•ΔT
         # Conduction Q̇ = κ•A•ΔT/l
         self.Temperature_Ambiante = self.Temperature_Ambiante_C + 273.15 # C
@@ -76,8 +68,10 @@ class Plaque:
         # print(f'C Air sides {self.Constante_Air_side}')
 
         # Temp Initial 
-        self.Geometry_Matrix = np.full((int(self.plaque_largeur/self.mm_par_element), int(self.plaque_longueur/self.mm_par_element)), float(self.Temperature_Ambiante))
-        self.Geometry_Actu = np.full((int(self.largeur_actu/self.mm_par_element), int(self.largeur_actu/self.mm_par_element)), float(self.Temperature_Ambiante))
+        # self.Geometry_Matrix = np.full((int(self.plaque_largeur/self.mm_par_element), int(self.plaque_longueur/self.mm_par_element)), float(self.Temperature_Ambiante))
+        # self.Geometry_Actu = np.full((int(self.largeur_actu/self.mm_par_element), int(self.largeur_actu/self.mm_par_element)), float(self.Temperature_Ambiante))
+        self.Geometry_Matrix = np.full((max(1,int(self.plaque_largeur/self.mm_par_element)), max(1,int(self.plaque_longueur/self.mm_par_element))), float(self.Temperature_Ambiante))
+        self.Geometry_Actu = np.full((max(1,int(self.largeur_actu/self.mm_par_element)), max(1,int(self.largeur_actu/self.mm_par_element))), float(self.Temperature_Ambiante))
 
         self.Cooling = False
         if self.puissance_actuateur < 0:
@@ -117,7 +111,7 @@ class Plaque:
     def Heat_Pumped(self, Th, Delta_T, Power):
         Courant = Power*1.2
         if Courant == 0:
-            return
+            return 0
         a=1.21161+0.02535*Th
         b=-0.04109-0.00298*Th
         c=35.223+0.07174*Th
