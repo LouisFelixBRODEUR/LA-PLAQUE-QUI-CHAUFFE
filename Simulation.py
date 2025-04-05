@@ -312,7 +312,7 @@ class Plaque:
                 simu_elapsed_time = time.time() - simu_start_time
                 hours, remainder = divmod(simu_elapsed_time, 3600)
                 minutes, seconds = divmod(remainder, 60)
-                print(f'Simulation Complete!\n{self.iteration_counter} iterations computed in {int(hours):02}h {int(minutes):02}m {int(seconds):02}s')
+                print(f'Simulation terminée!\n{self.iteration_counter} itérations calculées en {int(hours):02}h {int(minutes):02}m {int(seconds):02}s')
             self.actual_time_data = time_data[:len(self.Interest_point_data_C_1)]
             if display_animation:
                 thermi_1.set_data(self.actual_time_data, self.Interest_point_data_C_1)
