@@ -1,13 +1,24 @@
+"""
+Ce code contient la classe Plaque qui pest initialiser en lui donnant un dictionnaire avec des paramètres de simulation
+Ensuite, une simulation de la diffusion de la chaleur dans un plaque en accordance avec les paramètres du dictionnaire peut être lancer
+La simulation est affiché en temps réel dans une fenêtre matplotlib
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 import matplotlib.animation as animation
 import os
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 
 class Plaque:
     def __init__(self, Parameters):
+        """
+        Initialise tous les paramètres de simulation à partir d'un dictionnaire
+        Calcule des constantes thermique
+        Crée les matrices représentant la plaque et l'actuateur
+        """
         self.Para = Parameters
         self.plaque_largeur = float(Parameters['plaque_largeur'])
         self.plaque_longueur = float(Parameters['plaque_longueur']) 
@@ -19,6 +30,7 @@ class Plaque:
         self.position_largeur_actuateur = float(Parameters['position_largeur_actuateur']) 
         self.puissance_actuateur = float(Parameters['puissance_actuateur'])
         self.couple_actuateur = float(Parameters['couple_actuateur'])
+        self.voltage_actuateur = float(Parameters['voltage_actuateur'])
         self.convection_actuateur = float(Parameters['convection_actuateur'])
         self.masse_volumique_plaque = float(Parameters['masse_volumique_plaque'])
         self.masse_volumique_actu = float(Parameters['masse_volumique_actu'])
@@ -44,7 +56,7 @@ class Plaque:
         self.perturabtion_stop = float(Parameters['perturabtion_stop'])
         self.perturbation_power = float(Parameters['perturbation_power'])
 
-        # Automatic time step
+        # Automatic time step pour respecter Courant–Friedrichs–Lewy condition
         if Parameters['time_step'] == 'auto':
             self.time_step = 1/(self.conductivite_thermique_plaque/0.2/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)**2)
         else:
@@ -52,64 +64,53 @@ class Plaque:
 
         # Convection Q̇ = h•A•ΔT
         # Conduction Q̇ = κ•A•ΔT/l
-        self.Temperature_Ambiante = self.Temperature_Ambiante_C + 273.15 # C
+        # Constantes thermique pour la plaque
+        self.Temperature_Ambiante = self.Temperature_Ambiante_C + 273.15
         self.Constante_plaque = self.conductivite_thermique_plaque*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)**2
         self.Constante_Air_top_bot = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.epaisseur_plaque_mm/1000)
         self.Constante_Air_side = self.coefficient_convection*self.time_step/self.masse_volumique_plaque/self.capacite_thermique_plaque/(self.mm_par_element/1000)
-
-        self.capacite_thermique_Actu
-        self.masse_volumique_actu
         
+        # Constante thermique pour l'actuateur
         self.Constante_Air_top_bot_Actu = self.convection_actuateur*self.time_step/self.masse_volumique_actu/self.capacite_thermique_Actu/(self.epaisseur_actu_mm/1000)
         self.Constante_Air_side_Actu = self.convection_actuateur*self.time_step/self.masse_volumique_actu/self.capacite_thermique_Actu/(self.mm_par_element/1000)
         
-        # print(f'C Plaque {self.Constante_plaque}') 
-        # print(f'C Air bot_top {self.Constante_Air_top_bot}')
-        # print(f'C Air sides {self.Constante_Air_side}')
-
-        # Temp Initial 
-        # self.Geometry_Matrix = np.full((int(self.plaque_largeur/self.mm_par_element), int(self.plaque_longueur/self.mm_par_element)), float(self.Temperature_Ambiante))
-        # self.Geometry_Actu = np.full((int(self.largeur_actu/self.mm_par_element), int(self.largeur_actu/self.mm_par_element)), float(self.Temperature_Ambiante))
+        # Geometrie de température initial pour la plaque et l'actuateur
         self.Geometry_Matrix = np.full((max(1,int(self.plaque_largeur/self.mm_par_element)), max(1,int(self.plaque_longueur/self.mm_par_element))), float(self.Temperature_Ambiante))
         self.Geometry_Actu = np.full((max(1,int(self.largeur_actu/self.mm_par_element)), max(1,int(self.largeur_actu/self.mm_par_element))), float(self.Temperature_Ambiante))
 
-        self.Cooling = False
-        if self.puissance_actuateur < 0:
-            self.Cooling = True
-
-
-
-
     def iterate(self):
-        padded_matrix = np.pad(self.Geometry_Matrix, ((1, 1), (1, 1)), mode='constant', constant_values=self.Temperature_Ambiante)
-        # Initialize delta_T_voisin_plaque with zeros
+        """
+        Calcule une itération de diffusion thermique dans la plaque
+        """
+        padded_matrix = np.pad(self.Geometry_Matrix, ((1, 1), (1, 1)), mode='constant', constant_values=self.Temperature_Ambiante) # Matrix avec pad pour gérer les voisin de manière vectorielle
+        # Matrice des delta de température spatial
         delta_T_voisin_plaque = np.zeros_like(self.Geometry_Matrix)
-        # Temperature des elements interieurs
         delta_T_voisin_plaque += padded_matrix[1:-1, :-2] - self.Geometry_Matrix  # Left neighbor
         delta_T_voisin_plaque += padded_matrix[1:-1, 2:] - self.Geometry_Matrix   # Right neighbor
         delta_T_voisin_plaque += padded_matrix[:-2, 1:-1] - self.Geometry_Matrix  # Top neighbor
         delta_T_voisin_plaque += padded_matrix[2:, 1:-1] - self.Geometry_Matrix   # Bottom neighbor
-        # Left cote
-        delta_T_voisin_plaque[:, 0] -= padded_matrix[1:-1, 0] - self.Geometry_Matrix[:, 0]
-        # Right cote
-        delta_T_voisin_plaque[:, -1] -= padded_matrix[1:-1, -1] - self.Geometry_Matrix[:, -1]
-        # Top cote
-        delta_T_voisin_plaque[0, :] -= padded_matrix[0, 1:-1] - self.Geometry_Matrix[0, :]
-        # Bottom cote 
-        delta_T_voisin_plaque[-1, :] -= padded_matrix[-1, 1:-1] - self.Geometry_Matrix[-1, :]
-        # Somme des delta temp avec lair TOP BOT
+        # Gestion des cotés
+        delta_T_voisin_plaque[:, 0] -= padded_matrix[1:-1, 0] - self.Geometry_Matrix[:, 0] # Left cote
+        delta_T_voisin_plaque[:, -1] -= padded_matrix[1:-1, -1] - self.Geometry_Matrix[:, -1] # Right cote
+        delta_T_voisin_plaque[0, :] -= padded_matrix[0, 1:-1] - self.Geometry_Matrix[0, :] # Top cote
+        delta_T_voisin_plaque[-1, :] -= padded_matrix[-1, 1:-1] - self.Geometry_Matrix[-1, :] # Bottom cote 
+        # Somme des delta temp avec l'air pour TOP et BOT
         delta_T_voisin_air_top_bot = 2 * (self.Temperature_Ambiante - self.Geometry_Matrix)
-        # Somme des delta temp avec lair sides
+        # Somme des delta temp avec l'air pour les sides
         delta_T_voisin_air_side = np.zeros_like(self.Geometry_Matrix)
         delta_T_voisin_air_side[:, 0] += self.Temperature_Ambiante - self.Geometry_Matrix[:, 0]
         delta_T_voisin_air_side[:, -1] += self.Temperature_Ambiante - self.Geometry_Matrix[:, -1]
         delta_T_voisin_air_side[0, :] += self.Temperature_Ambiante - self.Geometry_Matrix[0, :]
         delta_T_voisin_air_side[-1, :] += self.Temperature_Ambiante - self.Geometry_Matrix[-1, :]
-        # Update the temperature matrix
+        # Update la matrice de la Geometrie de la temperature
         self.Geometry_Matrix += self.Constante_plaque * delta_T_voisin_plaque + self.Constante_Air_top_bot * delta_T_voisin_air_top_bot + self.Constante_Air_side * delta_T_voisin_air_side
 
-    def Heat_Pumped(self, Th, Delta_T, Power):
-        Courant = Power*1.2
+    def Heat_Pumped(self, Th, Delta_T_actu, Power):
+        """
+        Cette fonction modélise l'aproximation linéaire du graph présenté sur la data sheet de l'actuateur CP60140
+        La fonction prend une puissance électrique et done une puissance thermique de chaleur pompée
+        """
+        Courant = Power*self.voltage_actuateur # L'approximation linéaire est en courant donc P = IV
         if Courant == 0:
             return 0
         a=1.21161+0.02535*Th
@@ -118,12 +119,14 @@ class Plaque:
         d=-7.2969+0.00174*Th
         e=0.50796-0.000739*Th
         Power_at_0 = a*Courant+b*Courant**2
-        Delta_T_at_0 = c*Courant+d*Courant**2+e*Courant**3
-        Power = Power_at_0*(1-Delta_T/Delta_T_at_0)
-        self.count_power_queue =  self.count_power_queue+1
+        Delta_T_actu_at_0 = c*Courant+d*Courant**2+e*Courant**3
+        Power = Power_at_0*(1-Delta_T_actu/Delta_T_actu_at_0)
         return Power
     
     def perturbation_influence(self):
+        """
+        Cette ajoute une quantité de chaleur à la plaque à l'emplacement de la perturbation
+        """
         if self.perturbation_power == 0:
             return
         pos_y_perturbation = max(0,min(len(self.Geometry_Matrix)-1, int(self.perturbation_largeur/self.mm_par_element)))
@@ -132,8 +135,14 @@ class Plaque:
         delta_temp = self.perturbation_power*self.time_step*self.couple_actuateur / (self.epaisseur_plaque_mm /1000 * (self.mm_par_element/1000)**2 * self.masse_volumique_plaque) / self.capacite_thermique_plaque
         self.Geometry_Matrix[pos_y_perturbation, pos_x_perturbation] += delta_temp
     
-    def actuateur_influence(self):
+    def actuateur_influence(self, save_data_for_trsfer_fct=False):
+        """
+        Cette ajoute une quantité de chaleur à la plaque à l'emplacement de l'actuateur
+        """
         if self.largeur_actu==0 or self.longueur_actu ==0:
+            if save_data_for_trsfer_fct or self.save_txt != "Aucune Sélection":
+                self.data_for_trsfer_fct['power_in'] = np.append(self.data_for_trsfer_fct['power_in'], 0)
+                self.data_for_trsfer_fct['heat_pumped'] = np.append(self.data_for_trsfer_fct['heat_pumped'], 0)
             return
         pos_y_actu = max(0,min(len(self.Geometry_Matrix)-1, int(self.position_largeur_actuateur/self.mm_par_element)))
         pos_x_actu = max(0,min(len(self.Geometry_Matrix[0])-1, int(self.position_longueur_actuateur/self.mm_par_element)))
@@ -141,7 +150,8 @@ class Plaque:
         longueur_actu_in_element = self.longueur_actu/self.mm_par_element
         half_larg = int(largeur_actu_in_element/2)
         half_lon = int(longueur_actu_in_element/2)
-        # Only heat 1 element if actu is smaller than 1 element
+
+        # Heat seulement 1 element if actu is smaller than 1 element
         if half_larg == 0:
             Top_range_larg = 1
         else:
@@ -154,30 +164,24 @@ class Plaque:
         y_range = slice(pos_y_actu - half_larg, pos_y_actu + half_larg + Top_range_larg)
         x_range = slice(pos_x_actu - half_lon, pos_x_actu + half_lon + Top_range_lon)
 
-        # Calcul de la chaleur transmise par l'actuateur
-        if self.Cooling:
-            Th = np.average(self.Geometry_Actu)
-            Delta_T = Th - np.average(self.Geometry_Matrix[y_range, x_range])
-        else:
-            Th = np.average(self.Geometry_Matrix[y_range, x_range])
-            Delta_T = Th - np.average(self.Geometry_Actu)
+        T_Cote_plaque = np.average(self.Geometry_Matrix[y_range, x_range])
+        T_Cote_Actu = np.average(self.Geometry_Actu)
+        Th = max(T_Cote_plaque, T_Cote_Actu) # Cote chaud de lactuateur
+        Delta_T_actu = Th - min(T_Cote_plaque, T_Cote_Actu) # Difference de temp entre les cotes de l'actuateur
 
         Th_C = Th-273.15
-        if self.Cooling:
-            Chaleur_en_jeu = -self.Heat_Pumped(Th_C, Delta_T, -self.puissance_actuateur)*self.time_step*self.couple_actuateur
-        else:
-            Chaleur_en_jeu = self.Heat_Pumped(Th_C, Delta_T, self.puissance_actuateur)*self.time_step*self.couple_actuateur
-
-        # print(f'Th : {Th}')
-        # print(f'Delta_T : {Delta_T}')
-        # print(f'Heat Pumped : {Chaleur_en_jeu/self.time_step}W')
+        heat_pumped = np.sign(self.puissance_actuateur)*self.Heat_Pumped(Th_C, Delta_T_actu, np.abs(self.puissance_actuateur))
+        if save_data_for_trsfer_fct or self.save_txt != "Aucune Sélection":
+            self.data_for_trsfer_fct['power_in'] = np.append(self.data_for_trsfer_fct['power_in'], np.abs(self.puissance_actuateur))
+            self.data_for_trsfer_fct['heat_pumped'] = np.append(self.data_for_trsfer_fct['heat_pumped'], heat_pumped)
+        Chaleur_en_jeu = heat_pumped*self.time_step*self.couple_actuateur
                
         Chaleur_par_element = Chaleur_en_jeu /(largeur_actu_in_element*largeur_actu_in_element)
         delta_temp = Chaleur_par_element / (self.epaisseur_plaque_mm /1000 * (self.mm_par_element/1000)**2 * self.masse_volumique_plaque) / self.capacite_thermique_plaque
                 
         self.Geometry_Matrix[y_range, x_range] += delta_temp
 
-        # Compute convection et chaleur ajoute dans lactu
+        # Compute convection et chaleur pour l'actu
         delta_T_voisin_air_top_bot = 2 * (self.Temperature_Ambiante - self.Geometry_Actu)
         delta_T_voisin_air_side = np.zeros_like(self.Geometry_Actu)
         delta_T_voisin_air_side[:, 0] += self.Temperature_Ambiante - self.Geometry_Actu[:, 0]
@@ -186,13 +190,27 @@ class Plaque:
         delta_T_voisin_air_side[-1, :] += self.Temperature_Ambiante - self.Geometry_Actu[-1, :]
         self.Geometry_Actu += self.Constante_Air_top_bot_Actu * delta_T_voisin_air_top_bot + self.Constante_Air_side_Actu * delta_T_voisin_air_side - delta_temp
         
-    def Launch_Simu(self, display_animation=True, save_txt = "Aucune Sélection", Debug=False):
-        self.count_power_queue = 0
+    def Launch_Simu(self, display_animation=True, save_txt = "Aucune Sélection", Debug=False, save_data_for_trsfer_fct=False):
+        """
+        Fonction pour lancer la simulation
+        Fait une animation mpl de la plaque qui chauffe
+        Peut sauver le data de la simulation dans un format text
+        """
+        self.save_txt = save_txt
         simu_start_time = time.time()
-        dt_object = datetime.fromtimestamp(simu_start_time)
-        time_stamp = dt_object.strftime("%Y-%m-%d %H:%M:%S.%f")  # With microseconds
+        time_stamp = datetime.fromtimestamp(simu_start_time).strftime("%Y-%m-%d %H:%M:%S.%f") # Time stamp au start de la simu
         time_stamp = time_stamp.replace(' ', '_').replace(':','-').replace('.','-')
+        if save_data_for_trsfer_fct or self.save_txt != "Aucune Sélection":
+            self.data_for_trsfer_fct = {
+                'time':np.array([]),
+                'power_in':np.array([]),
+                'heat_pumped':np.array([]),
+                'T1':np.array([]),
+                'T2':np.array([]),
+                'T3':np.array([])
+            }
         
+        # Initialise des variables pour les graphs
         iterations_number = max(1,int(self.simu_duration / self.time_step))
 
         Interest_point_y_1 = int(self.Interest_point_largeur_1 / self.plaque_largeur * len(self.Geometry_Matrix))
@@ -202,10 +220,6 @@ class Plaque:
         Interest_point_y_3 = int(self.Interest_point_largeur_3 / self.plaque_largeur * len(self.Geometry_Matrix))
         Interest_point_x_3 = int(self.Interest_point_longueur_3 / self.plaque_longueur * len(self.Geometry_Matrix[0]))
 
-        # Interest_point_y_1 = len(self.Geometry_Matrix)-1
-
-        # self.Geometry_Matrix[len(self.Geometry_Matrix)-1][len(self.Geometry_Matrix[0])-1]
-
         Interest_point_y_1 = max(0, min(len(self.Geometry_Matrix)-1, Interest_point_y_1))
         Interest_point_x_1 = max(0, min(len(self.Geometry_Matrix[0])-1, Interest_point_x_1))
         Interest_point_y_2 = max(0, min(len(self.Geometry_Matrix)-1, Interest_point_y_2))
@@ -213,20 +227,20 @@ class Plaque:
         Interest_point_y_3 = max(0, min(len(self.Geometry_Matrix)-1, Interest_point_y_3))
         Interest_point_x_3 = max(0, min(len(self.Geometry_Matrix[0])-1, Interest_point_x_3))
 
-
         self.Interest_point_data_C_1 = []
         self.Interest_point_data_C_2 = []
         self.Interest_point_data_C_3 = []
-        # Interest Point at 0
+
+        # Log une première valeur a température ambiante pour les 3 thermistances
         self.Interest_point_data_C_1.append(self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
         self.Interest_point_data_C_2.append(self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
         self.Interest_point_data_C_3.append(self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
       
-        display_frame_step = max(1,int(iterations_number/self.simu_duration))
+        display_frame_step = max(1,int(iterations_number/self.simu_duration)) 
         time_data = np.append(np.arange(0, iterations_number*self.time_step, display_frame_step*self.time_step),iterations_number*self.time_step)
 
         if display_animation:
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))  # Two side-by-side plots
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
             if Debug:
                 Info = ''
                 for n, dic_item in enumerate(self.Para.items()):
@@ -246,12 +260,11 @@ class Plaque:
             ax1.scatter(Interest_point_x_2, Interest_point_y_2, color="green", s=200, marker='x')
             ax1.scatter(Interest_point_x_3, Interest_point_y_3, color="black", s=200, marker='x')
 
-            # Set x-axis ticks en mm
             x_ticks = np.linspace(-0.5, len(self.Geometry_Matrix[0])-0.5, 5)
             x_labels = np.linspace(0, self.plaque_longueur, 5).astype(int)
             ax1.set_xticks(x_ticks)
             ax1.set_xticklabels([f"{val} mm" for val in x_labels])
-            # Set y-axis ticks en mm
+
             y_ticks = np.linspace(-0.5, len(self.Geometry_Matrix)-0.5, 5)
             y_labels = np.linspace(0, self.plaque_largeur, 5).astype(int)
             ax1.set_yticks(y_ticks)
@@ -262,12 +275,11 @@ class Plaque:
             thermi_2, = ax2.plot([], [], 'green', label = 'Thermistance 2')
             thermi_3, = ax2.plot([], [], 'black', label = 'Thermistance Laser')
             
-            
             ax2.set_xlim(0, iterations_number * self.time_step)
-            x_ticks = np.linspace(0, iterations_number * self.time_step, num=8)  # 5 ticks, including the last one
+            x_ticks = np.linspace(0, iterations_number * self.time_step, num=8)
             ax2.set_xticks(x_ticks)
             
-            ax2.set_ylim(-10, 100)  # Adjust Y-limits
+            ax2.set_ylim(-10, 100)
             ax2.grid(True)
             ax2.set_xlabel("Temps (s)")
             ax2.set_ylabel("Temperature (°C)")
@@ -275,19 +287,30 @@ class Plaque:
             ax2.legend(loc='upper left')
 
         def update(i):
+            """
+            Fonction que animation call en loop
+            """
             for j in range(display_frame_step): # Compute le nombre diteration pour faire 1 display_frame_step
                 if self.actu_start < self.iteration_counter * self.time_step < self.actu_stop:
-                    self.actuateur_influence()
+                    self.actuateur_influence(save_data_for_trsfer_fct=save_data_for_trsfer_fct)
+                elif save_data_for_trsfer_fct or self.save_txt != "Aucune Sélection":
+                    self.data_for_trsfer_fct['power_in'] = np.append(self.data_for_trsfer_fct['power_in'], 0)
+                    self.data_for_trsfer_fct['heat_pumped'] = np.append(self.data_for_trsfer_fct['heat_pumped'], 0)
                 if self.perturabtion_start < self.iteration_counter * self.time_step < self.perturabtion_stop:
                     self.perturbation_influence()
                 self.iterate()
+                if save_data_for_trsfer_fct or self.save_txt != "Aucune Sélection":
+                    self.data_for_trsfer_fct['time'] = np.append(self.data_for_trsfer_fct['time'], self.iteration_counter * self.time_step)
+                    self.data_for_trsfer_fct['T1'] = np.append(self.data_for_trsfer_fct['T1'], self.Geometry_Matrix[Interest_point_y_1][Interest_point_x_1] - 273.15)
+                    self.data_for_trsfer_fct['T2'] = np.append(self.data_for_trsfer_fct['T2'], self.Geometry_Matrix[Interest_point_y_2][Interest_point_x_2] - 273.15)
+                    self.data_for_trsfer_fct['T3'] = np.append(self.data_for_trsfer_fct['T3'], self.Geometry_Matrix[Interest_point_y_3][Interest_point_x_3] - 273.15)
                 self.iteration_counter += 1
 
-            if save_txt != "Aucune Sélection":
-                output_dir = save_txt
+            if self.save_txt != "Aucune Sélection": # Sauvegarde en format texte
+                output_dir = self.save_txt
                 os.makedirs(output_dir, exist_ok=True)
                 time_in_simulation = self.iteration_counter * self.time_step
-                geometry_2D = self.Geometry_Matrix  # a 2D list/array: [X][Y]
+                geometry_2D = self.Geometry_Matrix
                 lines = [f"time = {time_in_simulation}\n"]
                 for row in geometry_2D:
                     line = ",".join(str(val) for val in row)
@@ -307,7 +330,6 @@ class Plaque:
                 img.set_clim(min_value_temp - 273.15, max_value_temp - 273.15)
                 ax1.set_title(f'Température de la plaque à T = {int(round(self.iteration_counter * self.time_step, 0))} secondes')
 
-
             # Message if last iteration
             if self.iteration_counter >= iterations_number:
                 simu_elapsed_time = time.time() - simu_start_time
@@ -323,25 +345,30 @@ class Plaque:
                 y1 = thermi_1.get_ydata()
                 y2 = thermi_2.get_ydata()
                 y3 = thermi_3.get_ydata()
-                # FOllow the min and max
+                # Adjust the min and max pour les limites
                 T_max = np.max([np.max(y1), np.max(y2), np.max(y3)]) + 5
                 T_min = np.min([np.min(y1), np.min(y2), np.min(y3)]) - 5
-                ax2.set_ylim(T_min, T_max)  # Adjust Y-limits
+                ax2.set_ylim(T_min, T_max)
                 
                 if i > 0:
                     simu_time = self.iteration_counter * self.time_step
-                    # if simu_time/self.simu_playspeed_multiplier > time.time()-simu_start_time:
-                    #     time.sleep(simu_time/self.simu_playspeed_multiplier-(time.time()-simu_start_time))
                     while simu_time/self.simu_playspeed_multiplier > time.time()-simu_start_time:
                         pass
 
                 return img, thermi_1, thermi_2, thermi_3
 
-        if display_animation:  
+        if display_animation:
             self.iteration_counter = 0
             self.ani = animation.FuncAnimation(fig, update, frames=range(0, iterations_number - display_frame_step, display_frame_step), interval=0, blit=False, repeat=False, cache_frame_data=False)  
+            plt.subplots_adjust(left=0.05, bottom=0.1, right=0.95, top=0.9, wspace=None, hspace=None)
             plt.show()
         else:
             self.iteration_counter = 0
             for _ in range(0, iterations_number, display_frame_step):
                 update(_)
+        if self.save_txt != "Aucune Sélection":
+            df = pd.DataFrame(self.data_for_trsfer_fct)
+            file_path = os.path.join(self.save_txt, f"{time_stamp}_elements_data.csv")
+            df.to_csv(file_path, index=False)
+        if save_data_for_trsfer_fct or self.save_txt != "Aucune Sélection":
+            return self.data_for_trsfer_fct
