@@ -110,7 +110,7 @@ class Plaque:
         Cette fonction modélise l'aproximation linéaire du graph présenté sur la data sheet de l'actuateur CP60140
         La fonction prend une puissance électrique et done une puissance thermique de chaleur pompée
         """
-        Courant = Power*self.voltage_actuateur # L'approximation linéaire est en courant donc P = IV
+        Courant = Power/self.voltage_actuateur # L'approximation linéaire est en courant donc P = IV
         if Courant == 0:
             return 0
         a=1.21161+0.02535*Th

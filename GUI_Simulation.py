@@ -15,10 +15,6 @@ from scipy.optimize import curve_fit
 import control
 import numpy as np
 
-# TODO Au moins 10 autres paramètres what de fuck?
-# TODO manuel de l'utilisateur
-# TODO Clean Comments
-
 class GUI:
     def __init__(self):
         """
@@ -67,7 +63,7 @@ class GUI:
             'longueur_actu' : 15, # mm
             'puissance_actuateur' : 3, # W
             'couple_actuateur' : 1, # NA
-            'voltage_actuateur' : 1.2, #V
+            'voltage_actuateur' : 0.85, #V
             'convection_actuateur' : 40, # W/m2*K
             'masse_volumique_plaque' : 2700, # kg/m3
             'masse_volumique_actu' : 3950, # kg/m3
