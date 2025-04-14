@@ -9,6 +9,8 @@ from Simulation import Plaque
 import math
 import sys
 import json
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import tempfile
 from scipy.optimize import curve_fit
